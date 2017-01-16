@@ -21,6 +21,10 @@ repositories {
 dependencies {
     // https://mvnrepository.com/artifact/com.hp.hpl.jena/jena
     compile group: 'com.hp.hpl.jena', name: 'jena', version: '2.6.4'
+    // https://mvnrepository.com/artifact/commons-io/commons-io
+    compile group: 'commons-io', name: 'commons-io', version: '2.5'
+    // https://mvnrepository.com/artifact/org.antlr/ST4
+    compile group: 'org.antlr', name: 'ST4', version: '4.0.7'
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
