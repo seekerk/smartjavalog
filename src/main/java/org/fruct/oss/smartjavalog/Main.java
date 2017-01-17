@@ -26,6 +26,21 @@ public class Main {
     
     static final String CLASS_TEMPLATE = "templates/class.template";
     String classTemplate;
+    
+    static final String FACTORY_TEMPLATE = "templates/factory.template";
+    String factoryTemplate;
+    
+    static final String DATAPROPERTY_TEMPLATE = "templates/data-property.template";
+    String dataPropertyTemplate;
+    
+    static final String OBJECTPROPERTY_TEMPLATE = "templates/object-property.template";
+    String objectPropertyTemplate;
+    
+    static final String UPDATE_DATAPROPERTY_TEMPLATE = "templates/update-data-property.template";
+    String updateDataPropertyTemplate;
+
+    static final String UPDATE_OBJECTPROPERTY_TEMPLATE = "templates/update-object-property.template";
+    String updateObjectPropertyTemplate;
 
     String owlFile = "samples/user.owl";
 
@@ -38,6 +53,11 @@ public class Main {
 
     Main() {
         classTemplate = loadTemplate(CLASS_TEMPLATE);
+        factoryTemplate = loadTemplate(FACTORY_TEMPLATE);
+        dataPropertyTemplate = loadTemplate(DATAPROPERTY_TEMPLATE);
+        objectPropertyTemplate = loadTemplate(OBJECTPROPERTY_TEMPLATE);
+        updateDataPropertyTemplate = loadTemplate(UPDATE_DATAPROPERTY_TEMPLATE);
+        updateObjectPropertyTemplate = loadTemplate(UPDATE_OBJECTPROPERTY_TEMPLATE);
     }
     
     /**
@@ -62,7 +82,7 @@ public class Main {
         }
         
         // создаем результирующий каталог
-        File outputDir = new File(javalog.outputFolder);
+        File outputDir = new File(javalog.outputFolder + "/" + javalog.packageName.replace(".","/"));
         if (!outputDir.exists()) {
             outputDir.mkdirs();
         }
@@ -74,14 +94,7 @@ public class Main {
         while(iter.hasNext()) {
             OntClass ontclss = iter.next();
             String classContent = javalog.generateClass(ontclss);
-            try {
-                System.out.println("Create file \"" + javalog.outputFolder + "/" + ontclss.getLocalName() + ".java\"");
-                PrintWriter writer = new PrintWriter(javalog.outputFolder + "/" + ontclss.getLocalName() + ".java");
-                writer.print(classContent);
-                writer.close();
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            javalog.saveFile(ontclss.getLocalName() + ".java", classContent);
 
 
                 /*            System.out.println("====== CLASS ==========");
@@ -118,6 +131,48 @@ public class Main {
     }
 
     private String generateClass(OntClass classValue) {
+        StringBuilder classProperties = new StringBuilder();
+        StringBuilder updateProperties = new StringBuilder();
+        
+        // generate methods for class properties
+        ExtendedIterator<OntProperty> propIter = classValue.listDeclaredProperties();
+        while (propIter.hasNext()) {
+            OntProperty propVal = propIter.next();
+            ST classProperty;
+            ST updateProperty;
+            String propType = "String";
+            if (propVal.isDatatypeProperty()) {
+                classProperty = new ST(dataPropertyTemplate, '$', '$');
+                updateProperty = new ST(updateDataPropertyTemplate, '$', '$');
+                OntResource res = propVal.getRange(); // null для Datatype и ontclass для objectproperty
+                if (res != null && !res.getLocalName().equals("string")) {
+                    if (res.getLocalName().equals("double")) {
+                        propType = "Double";
+                    } else {
+                        System.out.println("Value type: " + res.getLocalName()); // Location
+                    }
+                }
+                
+                //TODO: обработка различных типов данных
+            } else if (propVal.isObjectProperty()) {
+                classProperty = new ST(objectPropertyTemplate, '$', '$');
+                updateProperty = new ST(updateObjectPropertyTemplate, '$', '$');
+                propType = propVal.getRange().getLocalName();
+            } else {
+                //TODO: implement for other property Types
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+
+            classProperty.add("PROPERTY_NAME", propVal.getLocalName());
+            classProperty.add("PROPERTY_URI", propVal.toString());
+            classProperty.add("PROPERTY_TYPE", propType);
+            classProperties.append(classProperty.render());
+
+            updateProperty.add("PROPERTY_NAME", propVal.getLocalName());
+            updateProperty.add("PROPERTY_URI", propVal.toString());
+            updateProperty.add("PROPERTY_TYPE", propType);
+            updateProperties.append(updateProperty.render());
+        }
         
         // generate output file
         ST classContent;
@@ -125,8 +180,8 @@ public class Main {
         classContent.add("PACKAGE_NAME", packageName);
         classContent.add("CLASS_NAME", classValue.getLocalName());
         classContent.add("CLASS_URI", classValue.toString());
-        //TODO: CLASS_PROPERTIES
-        //TODO: PROPERTIES_UPDATE
+        classContent.add("CLASS_PROPERTIES", classProperties.toString());
+        classContent.add("PROPERTIES_UPDATE", updateProperties.toString());
         
         return classContent.render();
     }
@@ -145,6 +200,21 @@ public class Main {
     }
 
     private void generateFactory() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        ST factoryContent;
+        factoryContent = new ST(factoryTemplate, '$', '$');
+        factoryContent.add("PACKAGE_NAME", packageName);
+        
+        saveFile("BaseRDF.java", factoryContent.render());
+    }
+
+    public void saveFile(String fileName, String value) {
+            try {
+                System.out.println("Create file \"" + this.outputFolder +  "/" + this.packageName.replace(".","/") + "/" + fileName + "\"");
+                PrintWriter writer = new PrintWriter(this.outputFolder +  "/" + this.packageName.replace(".","/") + "/" + fileName);
+                writer.print(value);
+                writer.close();
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            }
     }
 }

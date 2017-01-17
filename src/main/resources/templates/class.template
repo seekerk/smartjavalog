@@ -2,11 +2,10 @@ package $PACKAGE_NAME$;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.function.Consumer;
 import sofia_kp.KPICore;
 import sofia_kp.SIBResponse;
 
-class $CLASS_NAME$ extends BaseRDF {
+public class $CLASS_NAME$ extends BaseRDF {
 
     private static final String CLASS_URI = "$CLASS_URI$";
 
@@ -14,9 +13,13 @@ class $CLASS_NAME$ extends BaseRDF {
         super(kp, objectID);
     }
 
+    public $CLASS_NAME$(KPICore kp) {
+        super(kp, generateID("$CLASS_NAME$"));
+    }
+
     $CLASS_PROPERTIES$
 
-    void update() {
+    public void update() {
         // update triple store
         load();
 
