@@ -8,7 +8,7 @@
             return _$PROPERTY_NAME$_new;
         }
         // search in triple store
-        return getInTriples($PROPERTY_NAME$_URI);
+        return get$PROPERTY_TYPE$InTriples($PROPERTY_NAME$_URI);
     }
 
     public void $PROPERTY_NAME$($PROPERTY_TYPE$ value) {

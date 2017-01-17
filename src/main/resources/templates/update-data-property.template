@@ -1,13 +1,13 @@
         if (_$PROPERTY_NAME$_new != null) {
             // получаем старые значения
-            ArrayList<$PROPERTY_TYPE$> oldVals = getInTriples($PROPERTY_NAME$_URI);
+            ArrayList<$PROPERTY_TYPE$> oldVals = get$PROPERTY_TYPE$InTriples($PROPERTY_NAME$_URI);
             Iterator<$PROPERTY_TYPE$> itrNew = _$PROPERTY_NAME$_new.iterator();
             while (itrNew.hasNext()) {
                 $PROPERTY_TYPE$ curNew = itrNew.next();
                 // ищем старое значение
                 Iterator<$PROPERTY_TYPE$> itrOld = oldVals.iterator();
                 while(itrOld.hasNext()) {
-                    String curOld = itrOld.next();
+                    $PROPERTY_TYPE$ curOld = itrOld.next();
                     if (curNew.equals(curOld)) {
                         itrNew.remove();
                         itrOld.remove();
@@ -15,11 +15,11 @@
                     }
                 }
             }
-            _$PROPERTY_NAME$_new.stream().forEach((String val) -> {
-                newTriples.add(createTriple(getID(), $PROPERTY_NAME$_URI, val, "uri", "literal"));
+            _$PROPERTY_NAME$_new.stream().forEach(($PROPERTY_TYPE$ val) -> {
+                newTriples.add(createTriple(getID(), $PROPERTY_NAME$_URI, val.toString(), "uri", "literal"));
             });
             oldVals.stream().forEach((val) -> {
-                removeTriples.add(createTriple(getID(), $PROPERTY_NAME$_URI, val, "uri", "literal"));
+                removeTriples.add(createTriple(getID(), $PROPERTY_NAME$_URI, val.toString(), "uri", "literal"));
             });
 	    _$PROPERTY_NAME$_new = null;
         }

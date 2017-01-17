@@ -9,7 +9,7 @@
         
         ArrayList<$PROPERTY_TYPE$> ret = new ArrayList();
         //search IDs in triples
-        ArrayList<String> $PROPERTY_NAME$IDs = getInTriples($PROPERTY_NAME$_URI);
+        ArrayList<String> $PROPERTY_NAME$IDs = getStringInTriples($PROPERTY_NAME$_URI);
         for (String locID: $PROPERTY_NAME$IDs) {
             $PROPERTY_TYPE$ value = new $PROPERTY_TYPE$(_kp, locID);
             ret.add(value);
