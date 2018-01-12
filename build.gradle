@@ -2,9 +2,10 @@ apply plugin: "java"
 apply plugin: "application"
 apply plugin: 'maven'
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.13'
-}
+group 'com.github.seekerk'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
 
 mainClassName = "org.fruct.oss.smartjavalog.Main"
 
@@ -12,7 +13,23 @@ jar {
     manifest.attributes("Main-Class": mainClassName);
 }
 
-group = 'com.github.seekerk'
+task fatJar(type: Jar) {
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
+task runFatJar(type: JavaExec) {
+    dependsOn fatJar
+    classpath = fatJar.outputs.files
+    main = mainClassName
+    if (project.hasProperty("appArgs")) {
+        args Eval.me(appArgs)
+    }
+}
 
 repositories {
     mavenCentral()
@@ -23,6 +40,8 @@ dependencies {
     compile group: 'com.hp.hpl.jena', name: 'jena', version: '2.6.4'
     // https://mvnrepository.com/artifact/commons-io/commons-io
     compile group: 'commons-io', name: 'commons-io', version: '2.5'
+    // https://mvnrepository.com/artifact/commons-cli/commons-cli
+    compile group: 'commons-cli', name: 'commons-cli', version: '1.3.1'
     // https://mvnrepository.com/artifact/org.antlr/ST4
     compile group: 'org.antlr', name: 'ST4', version: '4.0.7'
 }
