@@ -1,19 +1,20 @@
 package org.fruct.oss.smartjavalog;
 
-import com.hp.hpl.jena.ontology.OntClass;
-import com.hp.hpl.jena.ontology.OntModel;
-import com.hp.hpl.jena.ontology.OntProperty;
-import com.hp.hpl.jena.ontology.OntResource;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import org.apache.commons.io.IOUtils;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.*;
 import org.stringtemplate.v4.ST;
 
 import java.io.*;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class JavaLogBuilder {
+
+    private static Logger log = Logger.getLogger(JavaLogBuilder.class.getName());
 
     private static final String CLASS_TEMPLATE = "templates/class.template";
     private String classTemplate;
@@ -33,13 +34,23 @@ public class JavaLogBuilder {
     private static final String UPDATE_OBJECTPROPERTY_TEMPLATE = "templates/update-object-property.template";
     private String updateObjectPropertyTemplate;
 
+    /**
+     * источник данных
+     */
     private String owlFile;// = "samples/user.owl";
 
+    /**
+     * имя пакета
+     */
     private String packageName;// = "org.fruct.oss";
 
+    /**
+     * директория для записи данных
+     */
     private String outputFolder;
 
-    OntModel model;
+
+    private OWLOntology ontology = null;
 
     JavaLogBuilder() {
         classTemplate = loadTemplate(CLASS_TEMPLATE);
@@ -62,7 +73,7 @@ public class JavaLogBuilder {
         try {
             result = IOUtils.toString(classLoader.getResourceAsStream(fileName), "UTF-8");
         } catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            log.log(Level.SEVERE, null, ex);
         }
 
         return result;
@@ -95,11 +106,15 @@ public class JavaLogBuilder {
     /**
      * Parse owl/rdf file
      */
-    void parse() throws FileNotFoundException, IOException {
-        InputStream in = new FileInputStream(owlFile);
-        model = ModelFactory.createOntologyModel();
-        model.read(in, null);
-        in.close();
+    void parse() throws IOException {
+        OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+        try {
+            ontology = manager.loadOntologyFromOntologyDocument(new File(owlFile));
+        } catch (OWLOntologyCreationException e) {
+            e.printStackTrace();
+            return;
+        }
+        System.err.println("Loaded ontology: " + ontology.getAxiomCount() + " axioms");
     }
 
     private void generateFactory() {
@@ -112,23 +127,53 @@ public class JavaLogBuilder {
 
     private void saveFile(String fileName, String value) {
         try {
-            System.out.println("Create file \"" + this.outputFolder +  "/" + this.packageName.replace(".","/") + "/" + fileName + "\"");
+            log.log(Level.INFO, "Create file \"" + this.outputFolder +  "/" + this.packageName.replace(".","/") + "/" + fileName + "\"");
             PrintWriter writer = new PrintWriter(this.outputFolder +  "/" + this.packageName.replace(".","/") + "/" + fileName);
             writer.print(value);
             writer.close();
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            log.log(Level.SEVERE, null, ex);
         }
     }
 
     public void generate() {
+        // генерируем базовый класс
         generateFactory();
 
+        // пробегаемся по элементам
+        List<OWLAxiom> axiomList = ontology.axioms().collect(Collectors.toList());
+        for (OWLAxiom axiom : axiomList) {
+            axiom.accept(new OntologyVisitor());
+        }
 
+        Map<String, OntologyClass> classes = OntologyFactory.getInstance().getClasses();
+
+        for (OntologyClass ontologyClass : classes.values()) {
+            printClass(ontologyClass);
+        }
+    }
+
+    private void printClass(OntologyClass cls) {
+        //TODO: доделать
+    }
+
+    /**
+     * Основной метод запускающий генерацию кода
+     */
+    public void generate2() {
+        // генерируем базовый класс
+        generateFactory();
+
+/*
         // пробегаемся по классам
         ExtendedIterator<OntClass> iter = model.listClasses();
         while(iter.hasNext()) {
             OntClass ontclss = iter.next();
+            if (ontclss.getLocalName() == null) {
+                log.log(Level.WARNING, "Parsed class doesn't have a name " + ontclss.getId());
+                continue;
+            }
+            log.log(Level.INFO, "Parse class " + ontclss.getLocalName());
             String classContent = generateClass(ontclss);
             saveFile(ontclss.getLocalName() + ".java", classContent);
 
@@ -156,7 +201,12 @@ public class JavaLogBuilder {
         }
     }
 
-    private String generateClass(OntClass classValue) {
+    /**
+     * Генерация класса
+     * @param classValue Точка класса
+     * @return код на Java
+     */
+/*    private String generateClass(OntClass classValue) {
         StringBuilder classProperties = new StringBuilder();
         StringBuilder updateProperties = new StringBuilder();
 
@@ -164,6 +214,7 @@ public class JavaLogBuilder {
         ExtendedIterator<OntProperty> propIter = classValue.listDeclaredProperties();
         while (propIter.hasNext()) {
             OntProperty propVal = propIter.next();
+            log.log(Level.INFO, "Parse property \"" + propVal.getLocalName() + "\"");
             ST classProperty;
             ST updateProperty;
             String propType = "String";
@@ -171,11 +222,34 @@ public class JavaLogBuilder {
                 classProperty = new ST(dataPropertyTemplate, '$', '$');
                 updateProperty = new ST(updateDataPropertyTemplate, '$', '$');
                 OntResource res = propVal.getRange(); // null для Datatype и ontclass для objectproperty
-                if (res != null && res.getLocalName() != null && !res.getLocalName().equals("string")) {
-                    if (res.getLocalName().equals("double")) {
-                        propType = "Double";
-                    } else {
-                        System.out.println("Value type: " + res.getLocalName()); // Location
+                ExtendedIterator iter = propVal.listDeclaringClasses(true);
+                log.log(Level.INFO, "Property \"" + propVal.getLocalName() + "\" has type = \"" + res.getLocalName() + "\"");
+                if (res.getLocalName() == null) {
+                    NodeIterator i = res.getModel().listObjects();
+                    //StmtIterator i = res.listProperties();
+                    while (i.hasNext()) {
+                        RDFNode s = i.next();
+                        log.log(Level.INFO, "node: isLiteral=" + s.isLiteral() + "; isResource=" + s.isResource() + "; isAnon=" + s.isAnon());
+                        //s.getModel().listObjects()
+                    }
+                    // сложный тип???
+                    log.log(Level.INFO, "Found complex property: " + res.getRDFType());
+
+                    continue;
+                }
+                if (res != null && !res.getLocalName().equals("string")) {
+                    switch (res.getLocalName()) {
+                        case "Double": {
+                            propType = "Double";
+                            break;
+                        }
+                        case "decimal": {
+                            propType = "Integer";
+                            break;
+                        }
+
+                        default:
+                            System.out.println("Unknown property value type: " + res.getLocalName()); // Location
                     }
                 }
 
@@ -213,3 +287,4 @@ public class JavaLogBuilder {
     }
 
 }
+*/

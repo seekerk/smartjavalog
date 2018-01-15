@@ -37,9 +37,14 @@ repositories {
 
 dependencies {
     // https://mvnrepository.com/artifact/com.hp.hpl.jena/jena
-    compile group: 'com.hp.hpl.jena', name: 'jena', version: '2.6.4'
+    //compile group: 'com.hp.hpl.jena', name: 'jena', version: '2.6.4'
+
+    compile 'net.sourceforge.owlapi:owlapi-distribution:5.1.4'
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-simple
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.24'
+
     // https://mvnrepository.com/artifact/commons-io/commons-io
-    compile group: 'commons-io', name: 'commons-io', version: '2.5'
+    //compile group: 'commons-io', name: 'commons-io', version: '2.5'
     // https://mvnrepository.com/artifact/commons-cli/commons-cli
     compile group: 'commons-cli', name: 'commons-cli', version: '1.3.1'
     // https://mvnrepository.com/artifact/org.antlr/ST4

@@ -53,7 +53,8 @@ public class Main {
                 exit(2);
             }
         }
-        
+
+        // генерация файлов
         javalog.generate();
 
     }
