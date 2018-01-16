@@ -29,4 +29,8 @@ public class OntologyDataProperty {
         complexTypes.add(iri);
         System.err.println("Add complex type \"" + iri.getFragment() + "\" for data property \"" + name.getFragment() + "\"");
     }
+
+    public List<OWL2Datatype> getOWLTypes() {
+       return simpleTypes;
+    }
 }

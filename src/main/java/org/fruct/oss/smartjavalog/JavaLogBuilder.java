@@ -3,6 +3,7 @@ package org.fruct.oss.smartjavalog;
 import org.apache.commons.io.IOUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.stringtemplate.v4.ST;
 
 import java.io.*;
@@ -153,8 +154,78 @@ public class JavaLogBuilder {
         }
     }
 
+    /**
+     * Печать структуры класса в шаблоне с сохранением в файл
+     * @param cls содержимое класса
+     */
     private void printClass(OntologyClass cls) {
         //TODO: доделать
+
+        ST classContent;
+        classContent = new ST(classTemplate, '$', '$');
+        classContent.add("PACKAGE_NAME", packageName);
+        classContent.add("CLASS_NAME", cls.getName());
+        classContent.add("CLASS_URI", cls.getURI());
+
+        StringBuilder propertyCollector = new StringBuilder();
+        StringBuilder updatePropertyCollector = new StringBuilder();
+        //пробегаемся по свойствам
+        Map<String, IRI> classProperties = cls.getProperties();
+        for (IRI property : classProperties.values()) {
+            if (OntologyFactory.getInstance().isDataProperty(property)) {
+                // если это не класс, а данные, то выбираем тип
+                log.info("Found data property \"" + property.getFragment() + "\" for class \"" + cls.getName() + "\"");
+                List<OWL2Datatype> types = OntologyFactory.getInstance().getDataProperty(property).getOWLTypes();
+                for (OWL2Datatype type : types) {
+                    ST propertyTemplate = new ST(dataPropertyTemplate, '$', '$');
+                    ST updatePropertyTemplate = new ST(updateDataPropertyTemplate, '$', '$');
+                    propertyTemplate.add("PROPERTY_NAME", property.getFragment());
+                    propertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                    propertyTemplate.add("PROPERTY_TYPE", getJavaType(type));
+                    propertyCollector.append(propertyTemplate.render());
+
+                    updatePropertyTemplate.add("PROPERTY_NAME", property.getFragment());
+                    updatePropertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                    updatePropertyTemplate.add("PROPERTY_TYPE", getJavaType(type));
+                    updatePropertyCollector.append(updatePropertyTemplate.render());
+
+                }
+
+            } else {
+                // это класс, просто добавяем к списку
+                log.info("Found class property\"" + property.getFragment() + "\" for class \"" + cls.getName() + "\"");
+                ST propertyTemplate = new ST(objectPropertyTemplate, '$', '$');
+                ST updatePropertyTemplate = new ST(updateObjectPropertyTemplate, '$', '$');
+                String propType = property.getFragment();
+                propertyTemplate.add("PROPERTY_NAME", property.getFragment());
+                propertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                propertyTemplate.add("PROPERTY_TYPE", propType);
+                propertyCollector.append(propertyTemplate.render());
+
+                updatePropertyTemplate.add("PROPERTY_NAME", property.getFragment());
+                updatePropertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                updatePropertyTemplate.add("PROPERTY_TYPE", propType);
+                updatePropertyCollector.append(updatePropertyTemplate.render());
+
+            }
+        }
+
+        classContent.add("CLASS_PROPERTIES", propertyCollector.toString());
+        classContent.add("PROPERTIES_UPDATE", updatePropertyCollector.toString());
+
+
+        saveFile(cls.getName() + ".java", classContent.render());
+    }
+
+    private String getJavaType(OWL2Datatype type) {
+
+        switch (type.name()) {
+            case "XSD_DOUBLE": {
+                return "double";
+            }
+            default:
+                throw new IllegalStateException("Not implemented");
+        }
     }
 
     /**

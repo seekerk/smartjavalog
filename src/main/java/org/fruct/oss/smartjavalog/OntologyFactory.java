@@ -107,4 +107,28 @@ public class OntologyFactory {
     public Map<String,OntologyClass> getClasses() {
         return classes;
     }
+
+    /**
+     * Проверка, является ли свойство класса свойством данных или ссылкой на другой класс
+     * @param property URI свойства
+     * @return true если это свойство данных, false если это свойство класса
+     */
+    public boolean isDataProperty(IRI property) {
+        if (classes.containsKey(property.getIRIString()))
+            return false;
+
+        if (properties.containsKey(property.getIRIString()))
+            return true;
+
+        throw new IllegalStateException("Unknown property \"" + property.getIRIString() + "\"");
+    }
+
+    /**
+     * Получение свойства класса по URI
+     * @param property URI свойства
+     * @return объект свойства класса или null если такого нет
+     */
+    public OntologyDataProperty getDataProperty(IRI property) {
+        return properties.get(property.getIRIString());
+    }
 }

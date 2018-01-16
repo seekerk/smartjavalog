@@ -2,15 +2,19 @@ package org.fruct.oss.smartjavalog;
 
 import org.semanticweb.owlapi.model.IRI;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class OntologyClass {
 
+    /**
+     * имя класса
+     */
     private IRI name;
 
+    /**
+     * Свойство класса (данные или другой класс)
+     */
     private Map<String, IRI> properties;
 
     OntologyClass(IRI classIri) {
@@ -18,10 +22,34 @@ public class OntologyClass {
         properties = new HashMap<>();
     }
 
+    /**
+     * Добавление свойства класса (данные или другой класс)
+     * @param propertyIri URI свойства
+     */
     public void addProperty(IRI propertyIri) {
         if (!properties.containsKey(propertyIri.getIRIString())) {
             properties.put(propertyIri.getIRIString(), propertyIri);
             System.err.println("Add property \"" + propertyIri.getFragment() + "\" to class \"" + name.getFragment() + "\"");
         }
+    }
+
+    /**
+     * Имя класса
+     * @return имя класса
+     */
+    public String getName() {
+        return name.getFragment();
+    }
+
+    /**
+     * URL класса
+     * @return url класса
+     */
+    public String getURI() {
+        return name.getIRIString();
+    }
+
+    public Map<String, IRI> getProperties() {
+        return properties;
     }
 }
