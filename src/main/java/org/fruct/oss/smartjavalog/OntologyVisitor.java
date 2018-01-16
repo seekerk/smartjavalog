@@ -364,10 +364,16 @@ public class OntologyVisitor implements OWLObjectVisitor {
 
     }
 
+    /**
+     * свойство класса
+     * @param axiom
+     */
     @Override
     public void visit(OWLDataPropertyDomainAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
+        //System.err.println(axiom);
+        IRI property = axiom.getProperty().dataPropertiesInSignature().collect(Collectors.toList()).get(0).getIRI(); // свойство класса
+        IRI cls = axiom.classesInSignature().collect(Collectors.toList()).get(0).getIRI();
+        OntologyFactory.getInstance().addClassWithProperty(cls, property);
     }
 
     @Override
@@ -376,10 +382,24 @@ public class OntologyVisitor implements OWLObjectVisitor {
 
     }
 
+    /**
+     * Комментарии к объектам
+     * @param axiom
+     */
     @Override
     public void visit(OWLAnnotationAssertionAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
+        //System.err.println(axiom);
 
+        //System.err.println(axiom.getSubject().asIRI().get().getFragment()); // аннотируемый объект
+
+        //System.err.println(axiom.getValue());
+        axiom.getValue().accept(new OWLAnnotationValueVisitor() {
+            @Override
+            public void visit(OWLLiteral node) {
+                //System.err.println(node.getLiteral()); // текст сообщения
+                OntologyFactory.getInstance().addComment(axiom.getSubject().asIRI().get(), node.getLiteral());
+            }
+        });
     }
 
     @Override
@@ -390,6 +410,7 @@ public class OntologyVisitor implements OWLObjectVisitor {
 
     @Override
     public void visit(OWLObjectPropertyRangeAxiom axiom) {
+        System.err.println(axiom);
         List<OWLDatatype> datatypes = axiom.datatypesInSignature().collect(Collectors.toList());
         if (datatypes.size() > 0) {
             if (datatypes.size() > 1) {
@@ -397,7 +418,7 @@ public class OntologyVisitor implements OWLObjectVisitor {
                 throw new IllegalStateException("Not implemented for datatypes size = " + datatypes.size());
             }
 
-            OntologyFactory.getInstance().addDataPropertyType(axiom.objectPropertiesInSignature().collect(Collectors.toList()).get(0),
+            OntologyFactory.getInstance().addPropertyType(axiom.objectPropertiesInSignature().collect(Collectors.toList()).get(0),
                     datatypes.get(0).getBuiltInDatatype());
         }
 
@@ -407,7 +428,7 @@ public class OntologyVisitor implements OWLObjectVisitor {
                 System.err.println(axiom);
                 throw new IllegalStateException("Not implemented for data properties size = " + datatypes.size());
             }
-            OntologyFactory.getInstance().addDataPropertyType(axiom.objectPropertiesInSignature().collect(Collectors.toList()).get(0),
+            OntologyFactory.getInstance().addPropertyType(axiom.objectPropertiesInSignature().collect(Collectors.toList()).get(0),
                     properties.get(0).getIRI());
         }
     }

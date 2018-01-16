@@ -3,11 +3,13 @@ package org.fruct.oss.smartjavalog;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataOneOf;
 import org.semanticweb.owlapi.model.OWLDatatype;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
-class OntologyDataType {
+class OntologyComplexDataType {
 
     private IRI name;
 
@@ -15,7 +17,7 @@ class OntologyDataType {
 
     OWLDataOneOf oneOfType = null;
 
-    OntologyDataType(IRI name) {
+    OntologyComplexDataType(IRI name) {
         this.name = name;
     }
 
@@ -30,5 +32,14 @@ class OntologyDataType {
         if (this.oneOfType != null)
             throw new IllegalStateException("Multiple call of setOneOfType()");
         this.oneOfType = oneOfType;
+    }
+
+    public Collection<? extends OWL2Datatype> getOWLDataTypes() {
+        List<OWL2Datatype> ret = new ArrayList<>();
+        if (type != null) {
+            ret.add(type.getBuiltInDatatype());
+        }
+        System.err.println(ret);
+        return ret;
     }
 }

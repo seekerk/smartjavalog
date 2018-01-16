@@ -5,6 +5,9 @@ import java.util.Iterator;
 import sofia_kp.KPICore;
 import sofia_kp.SIBResponse;
 
+/**
+$CLASS_DESCRIPTION$
+ */
 public class $CLASS_NAME$ extends BaseRDF {
 
     private static final String CLASS_URI = "$CLASS_URI$";

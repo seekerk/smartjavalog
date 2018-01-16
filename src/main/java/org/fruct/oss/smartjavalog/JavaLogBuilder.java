@@ -147,10 +147,10 @@ public class JavaLogBuilder {
             axiom.accept(new OntologyVisitor());
         }
 
-        Map<String, OntologyClass> classes = OntologyFactory.getInstance().getClasses();
+        Map<String, OntologyObject> classes = OntologyFactory.getInstance().getObjects();
 
-        for (OntologyClass ontologyClass : classes.values()) {
-            printClass(ontologyClass);
+        for (OntologyObject ontologyObject : classes.values()) {
+            printClass(ontologyObject);
         }
     }
 
@@ -158,7 +158,7 @@ public class JavaLogBuilder {
      * Печать структуры класса в шаблоне с сохранением в файл
      * @param cls содержимое класса
      */
-    private void printClass(OntologyClass cls) {
+    private void printClass(OntologyObject cls) {
         //TODO: доделать
 
         ST classContent;
@@ -166,6 +166,7 @@ public class JavaLogBuilder {
         classContent.add("PACKAGE_NAME", packageName);
         classContent.add("CLASS_NAME", cls.getName());
         classContent.add("CLASS_URI", cls.getURI());
+        classContent.add("CLASS_DESCRIPTION", " * " + OntologyFactory.getInstance().getComment(cls.getIRI()));
 
         StringBuilder propertyCollector = new StringBuilder();
         StringBuilder updatePropertyCollector = new StringBuilder();
@@ -175,7 +176,8 @@ public class JavaLogBuilder {
             if (OntologyFactory.getInstance().isDataProperty(property)) {
                 // если это не класс, а данные, то выбираем тип
                 log.info("Found data property \"" + property.getFragment() + "\" for class \"" + cls.getName() + "\"");
-                List<OWL2Datatype> types = OntologyFactory.getInstance().getDataProperty(property).getOWLTypes();
+                List<OWL2Datatype> types = OntologyFactory.getInstance().getDataProperty(property).getOWLDataTypes();
+                System.err.println("Types count=" + types.size());
                 for (OWL2Datatype type : types) {
                     ST propertyTemplate = new ST(dataPropertyTemplate, '$', '$');
                     ST updatePropertyTemplate = new ST(updateDataPropertyTemplate, '$', '$');
@@ -223,8 +225,11 @@ public class JavaLogBuilder {
             case "XSD_DOUBLE": {
                 return "double";
             }
+            case "XSD_STRING": {
+                return "String";
+            }
             default:
-                throw new IllegalStateException("Not implemented");
+                throw new IllegalStateException("Not implemented for " + type.name());
         }
     }
 

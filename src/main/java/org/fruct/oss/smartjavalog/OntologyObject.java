@@ -5,7 +5,7 @@ import org.semanticweb.owlapi.model.IRI;
 import java.util.HashMap;
 import java.util.Map;
 
-public class OntologyClass {
+public class OntologyObject {
 
     /**
      * имя класса
@@ -17,7 +17,7 @@ public class OntologyClass {
      */
     private Map<String, IRI> properties;
 
-    OntologyClass(IRI classIri) {
+    OntologyObject(IRI classIri) {
         name = classIri;
         properties = new HashMap<>();
     }
@@ -51,5 +51,9 @@ public class OntologyClass {
 
     public Map<String, IRI> getProperties() {
         return properties;
+    }
+
+    public IRI getIRI() {
+        return name;
     }
 }
