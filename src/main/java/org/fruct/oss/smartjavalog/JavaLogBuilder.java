@@ -29,7 +29,7 @@ public class JavaLogBuilder {
     private static final String OBJECTPROPERTY_TEMPLATE = "templates/object-property.template";
     private String objectPropertyTemplate;
 
-    private static final String UPDATE_DATAPROPERTY_TEMPLATE = "templates/update-data-property.template";
+    private static final String UPDATE_DATAPROPERTY_TEMPLATE = "templates/update-data-property.java";
     private String updateDataPropertyTemplate;
 
     private static final String UPDATE_OBJECTPROPERTY_TEMPLATE = "templates/update-object-property.template";
@@ -238,7 +238,7 @@ public class JavaLogBuilder {
 
         switch (type.name()) {
             case "XSD_DOUBLE": {
-                return "double";
+                return "Double";
             }
             case "XSD_STRING": {
                 return "String";

@@ -15,12 +15,12 @@
                     }
                 }
             }
-            _$PROPERTY_NAME$_new.stream().forEach(($PROPERTY_TYPE$ val) -> {
+            for($PROPERTY_TYPE$ val : _$PROPERTY_NAME$_new) {
                 newTriples.add(createTriple(getID(), $PROPERTY_NAME$_URI, val.toString(), "uri", "literal"));
-            });
-            oldVals.stream().forEach((val) -> {
+            }
+            for($PROPERTY_TYPE$ val : oldVals){
                 removeTriples.add(createTriple(getID(), $PROPERTY_NAME$_URI, val.toString(), "uri", "literal"));
-            });
+            }
 	    _$PROPERTY_NAME$_new = null;
         }
 //-----------------------
