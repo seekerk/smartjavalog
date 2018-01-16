@@ -12,12 +12,25 @@ public class $CLASS_NAME$ extends BaseRDF {
 
     private static final String CLASS_URI = "$CLASS_URI$";
 
-    public $CLASS_NAME$(KPICore kp, String objectID) {
-        super(kp, objectID);
+    /**
+     * Creates new class entity
+     * @param objectID class entity id
+     * @param accessPointName the name of used access point
+     */
+    public $CLASS_NAME$(String objectID, String accessPointName) {
+        super(objectID, accessPointName);
     }
 
-    public $CLASS_NAME$(KPICore kp) {
-        super(kp, generateID("$CLASS_NAME$"));
+    /**
+     * Creates new class entity
+     * @param accessPointName  the name of used access point
+     */
+    public $CLASS_NAME$(String accessPointName) {
+        super(generateID("$CLASS_NAME$"), accessPointName);
+    }
+
+    public $CLASS_NAME$() {
+        super(generateID("$CLASS_NAME$"), SIBFactory.getInstance().getDefaultAccessPointName());
     }
 
     $CLASS_PROPERTIES$

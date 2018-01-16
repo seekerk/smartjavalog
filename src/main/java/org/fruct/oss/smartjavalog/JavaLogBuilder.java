@@ -17,11 +17,14 @@ public class JavaLogBuilder {
 
     private static Logger log = Logger.getLogger(JavaLogBuilder.class.getName());
 
-    private static final String CLASS_TEMPLATE = "templates/class.template";
+    private static final String CLASS_TEMPLATE = "templates/class.java";
     private String classTemplate;
 
-    private static final String FACTORY_TEMPLATE = "templates/factory.template";
-    private String factoryTemplate;
+    private static final String RDF_FACTORY_TEMPLATE = "templates/BaseRDF.java";
+    private String rdfFactoryTemplate;
+
+    private static final String SIB_FACTORY_TEMPLATE = "templates/SIBFactory.java";
+    private String sibFactoryTemplate;
 
     private static final String DATAPROPERTY_TEMPLATE = "templates/data-property.template";
     private String dataPropertyTemplate;
@@ -55,7 +58,8 @@ public class JavaLogBuilder {
 
     JavaLogBuilder() {
         classTemplate = loadTemplate(CLASS_TEMPLATE);
-        factoryTemplate = loadTemplate(FACTORY_TEMPLATE);
+        rdfFactoryTemplate = loadTemplate(RDF_FACTORY_TEMPLATE);
+        sibFactoryTemplate = loadTemplate(SIB_FACTORY_TEMPLATE);
         dataPropertyTemplate = loadTemplate(DATAPROPERTY_TEMPLATE);
         objectPropertyTemplate = loadTemplate(OBJECTPROPERTY_TEMPLATE);
         updateDataPropertyTemplate = loadTemplate(UPDATE_DATAPROPERTY_TEMPLATE);
@@ -120,10 +124,17 @@ public class JavaLogBuilder {
 
     private void generateFactory() {
         ST factoryContent;
-        factoryContent = new ST(factoryTemplate, '$', '$');
+        // baserdf.java
+        factoryContent = new ST(rdfFactoryTemplate, '$', '$');
         factoryContent.add("PACKAGE_NAME", packageName);
 
         saveFile("BaseRDF.java", factoryContent.render());
+
+        //sibFactory.java
+        factoryContent = new ST(sibFactoryTemplate, '$', '$');
+        factoryContent.add("PACKAGE_NAME", packageName);
+
+        saveFile("SIBFactory.java", factoryContent.render());
     }
 
     private void saveFile(String fileName, String value) {

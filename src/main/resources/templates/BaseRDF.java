@@ -7,37 +7,37 @@ import sofia_kp.SIBResponse;
 
 public abstract class BaseRDF {
 
-    protected KPICore _kp;
+    protected String _accessPointName;
     private final String _id;
     // датчик случайных чисел для генератора
     private static Random rand = null;
 
     // загруженные триплеты
     private ArrayList<ArrayList<String>> triples = null;
-    
+
     // разные гадости
     //TODO: заменить на rdg4j
     public static final String RDF_TYPE_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
     public static final String SIB_ANY = "http://www.nokia.com/NRC/M3/sib#any";
-    
-    public BaseRDF(KPICore kp, String objectID) {
-        _kp = kp;
+
+    public BaseRDF(String objectID, String accessPointName) {
+        _accessPointName = accessPointName;
         _id = objectID;
     }
-    
+
     public String getID() {
         return _id;
     }
-    
+
     /**
      * Получение URI класса для идентификации
      * @return URI
      */
     public abstract String getURI();
-    
+
     public void load() {
         SIBResponse resp;
-        resp = _kp.queryRDF(_id, SIB_ANY, SIB_ANY, "uri", "uri");
+        resp = SIBFactory.getInstance().getAccessPoint(_accessPointName).queryRDF(_id, SIB_ANY, SIB_ANY, "uri", "uri");
         if (!resp.isConfirmed()) {
             //TODO: change to exception
             System.err.println("Failed connection");
@@ -49,7 +49,7 @@ public abstract class BaseRDF {
             System.out.println(t);
         }
     }
-    
+
     public ArrayList<String> getStringInTriples(String searchURI) {
         ArrayList<String> ret = new ArrayList<>();
         if (this.triples == null) {
@@ -62,7 +62,7 @@ public abstract class BaseRDF {
         }
         return ret;
     }
-    
+
     public ArrayList<Double> getDoubleInTriples(String searchURI) {
         ArrayList<Double> ret = new ArrayList<>();
         if (this.triples == null) {
@@ -75,20 +75,20 @@ public abstract class BaseRDF {
         }
         return ret;
     }
-    
+
     /**
      *  функция для удаления свойства объекта из SIB
      * @param URI адрес свойства
      */
     public abstract void removeProperty(String URI);
-    
+
     public static String generateID(String prefix) {
         if (rand == null) {
             rand = new Random();
         }
-        return prefix + Long.toUnsignedString(rand.nextLong());
+        return String.format("%s%s", prefix, Long.toString(rand.nextLong()));
     }
-    
+
     /**
      * Создание триплета с объектом и субъектом типа "uri"
      * @param object объект (uri)
@@ -99,7 +99,7 @@ public abstract class BaseRDF {
     public static ArrayList<String> createTriple(String object, String predicate, String subject) {
         return createTriple(object, predicate, subject, "uri", "uri");
     }
-    
+
     /**
      * Создание триплета (объект->предикат->субъект)
      * @param object объект (uri)
@@ -110,7 +110,7 @@ public abstract class BaseRDF {
      * @return триплет в виде массива
      */
     public static ArrayList<String> createTriple(String object, String predicate, String subject, String objectType, String subjectType) {
-            ArrayList<String> ret = new ArrayList(5);
+            ArrayList<String> ret = new ArrayList<>(5);
             ret.add(object);
             ret.add(predicate);
             ret.add(subject);
@@ -118,17 +118,17 @@ public abstract class BaseRDF {
             ret.add(subjectType);
             return ret;
     }
-    
+
     /**
      * преобразование ArrayList в ArrayList и добавление в СИБ
      * @param list
      * @return 
      */
     protected SIBResponse _insert(ArrayList<ArrayList<String>> list) {
-        return _kp.insert(list);
+        return SIBFactory.getInstance().getAccessPoint(_accessPointName).insert(list);
     }
-    
+
     protected SIBResponse _remove(ArrayList<ArrayList<String>> list) {
-        return _kp.remove(list);
+        return SIBFactory.getInstance().getAccessPoint(_accessPointName).remove(list);
     }
 }
