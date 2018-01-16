@@ -3,9 +3,12 @@ package org.fruct.oss.smartjavalog;
 import org.semanticweb.owlapi.model.*;
 
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class OntologyVisitor implements OWLObjectVisitor {
+
+    private Logger log = Logger.getLogger(OntologyVisitor.class.getName());
 
     @Override
     public void visit(OWLDataPropertyRangeAxiom axiom) {
@@ -410,7 +413,8 @@ public class OntologyVisitor implements OWLObjectVisitor {
 
     @Override
     public void visit(OWLObjectPropertyRangeAxiom axiom) {
-        System.err.println(axiom);
+        OWLObjectProperty property = axiom.objectPropertiesInSignature().collect(Collectors.toList()).get(0);
+
         List<OWLDatatype> datatypes = axiom.datatypesInSignature().collect(Collectors.toList());
         if (datatypes.size() > 0) {
             if (datatypes.size() > 1) {
@@ -418,8 +422,10 @@ public class OntologyVisitor implements OWLObjectVisitor {
                 throw new IllegalStateException("Not implemented for datatypes size = " + datatypes.size());
             }
 
-            OntologyFactory.getInstance().addPropertyType(axiom.objectPropertiesInSignature().collect(Collectors.toList()).get(0),
+            OntologyFactory.getInstance().addPropertyType(property,
                     datatypes.get(0).getBuiltInDatatype());
+            log.info("Add data property");
+            return;
         }
 
         List<OWLDataProperty> properties = axiom.dataPropertiesInSignature().collect(Collectors.toList());
@@ -428,9 +434,25 @@ public class OntologyVisitor implements OWLObjectVisitor {
                 System.err.println(axiom);
                 throw new IllegalStateException("Not implemented for data properties size = " + datatypes.size());
             }
-            OntologyFactory.getInstance().addPropertyType(axiom.objectPropertiesInSignature().collect(Collectors.toList()).get(0),
+            OntologyFactory.getInstance().addPropertyType(property,
                     properties.get(0).getIRI());
+            log.info("Add complex data property: " + properties.get(0).getIRI());
+            return;
         }
+
+        List<OWLClass> classes = axiom.classesInSignature().collect(Collectors.toList());
+        if (classes.size() > 0) {
+            if (classes.size() > 1) {
+                System.err.println(axiom);
+                throw  new IllegalStateException("Not implemented for multiple classes size=" + classes.size());
+            }
+            OntologyFactory.getInstance().addPropertyType(property,
+                    classes.get(0).getIRI());
+            log.info("Add class value property: " + classes.get(0).getIRI());
+            return;
+        }
+
+        throw new IllegalStateException("Not implemented");
     }
 
     @Override

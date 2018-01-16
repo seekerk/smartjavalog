@@ -134,7 +134,7 @@ public class OntologyFactory {
      * @param property URI свойства
      * @return объект свойства класса или null если такого нет
      */
-    public OntologyProperty getDataProperty(IRI property) {
+    public OntologyProperty getProperty(IRI property) {
         return properties.get(property.getIRIString());
     }
 

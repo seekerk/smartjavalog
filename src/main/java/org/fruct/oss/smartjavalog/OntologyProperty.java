@@ -52,11 +52,26 @@ public class OntologyProperty {
         return ret;
     }
 
+
     public boolean isObjectProperty() {
+        log.info("Known types" + complexDataTypes);
         for(IRI type : complexDataTypes) {
             if (OntologyFactory.getInstance().getObject(type) != null)
                 return true;
         }
         return false;
+    }
+
+    /**
+     * Получение имени класса-значения
+     * @return название класса-значения
+     */
+    public String getClassValue() {
+        for (IRI type: complexDataTypes) {
+            if (OntologyFactory.getInstance().getObject(type) != null)
+                return type.getFragment();
+        }
+
+        return null;
     }
 }

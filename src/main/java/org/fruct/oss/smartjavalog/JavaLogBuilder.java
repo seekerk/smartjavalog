@@ -176,7 +176,7 @@ public class JavaLogBuilder {
             if (OntologyFactory.getInstance().isDataProperty(property)) {
                 // если это не класс, а данные, то выбираем тип
                 log.info("Found data property \"" + property.getFragment() + "\" for class \"" + cls.getName() + "\"");
-                List<OWL2Datatype> types = OntologyFactory.getInstance().getDataProperty(property).getOWLDataTypes();
+                List<OWL2Datatype> types = OntologyFactory.getInstance().getProperty(property).getOWLDataTypes();
                 System.err.println("Types count=" + types.size());
                 for (OWL2Datatype type : types) {
                     ST propertyTemplate = new ST(dataPropertyTemplate, '$', '$');
@@ -193,12 +193,27 @@ public class JavaLogBuilder {
 
                 }
 
+                if (types.size() == 0) {
+                    // если тип данных не указан, то по умолчанию это строка
+                    ST propertyTemplate = new ST(dataPropertyTemplate, '$', '$');
+                    ST updatePropertyTemplate = new ST(updateDataPropertyTemplate, '$', '$');
+                    propertyTemplate.add("PROPERTY_NAME", property.getFragment());
+                    propertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                    propertyTemplate.add("PROPERTY_TYPE", "String");
+                    propertyCollector.append(propertyTemplate.render());
+
+                    updatePropertyTemplate.add("PROPERTY_NAME", property.getFragment());
+                    updatePropertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                    updatePropertyTemplate.add("PROPERTY_TYPE", "String");
+                    updatePropertyCollector.append(updatePropertyTemplate.render());
+                }
+
             } else {
                 // это класс, просто добавяем к списку
                 log.info("Found class property\"" + property.getFragment() + "\" for class \"" + cls.getName() + "\"");
                 ST propertyTemplate = new ST(objectPropertyTemplate, '$', '$');
                 ST updatePropertyTemplate = new ST(updateObjectPropertyTemplate, '$', '$');
-                String propType = property.getFragment();
+                String propType = OntologyFactory.getInstance().getProperty(property).getClassValue();
                 propertyTemplate.add("PROPERTY_NAME", property.getFragment());
                 propertyTemplate.add("PROPERTY_URI", property.getIRIString());
                 propertyTemplate.add("PROPERTY_TYPE", propType);
