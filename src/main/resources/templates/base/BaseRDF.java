@@ -1,4 +1,4 @@
-package $PACKAGE_NAME$;
+package $PACKAGE_NAME$.base;
 
 import android.os.AsyncTask;
 
@@ -110,19 +110,6 @@ public abstract class BaseRDF {
             ret.add(objectType);
             ret.add(subjectType);
             return ret;
-    }
-
-    /**
-     * преобразование ArrayList в ArrayList и добавление в СИБ
-     * @param list
-     * @return 
-     */
-    protected SIBResponse _insert(ArrayList<ArrayList<String>> list) {
-        return SIBFactory.getInstance().getAccessPoint(_accessPointName).insert(list);
-    }
-
-    protected SIBResponse _remove(ArrayList<ArrayList<String>> list) {
-        return SIBFactory.getInstance().getAccessPoint(_accessPointName).remove(list);
     }
 
     private static class LoadTask extends AsyncTask<Void, Void, Void> {

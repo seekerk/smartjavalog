@@ -7,11 +7,18 @@ import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.stringtemplate.v4.ST;
 
 import java.io.*;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
+
+import static java.lang.System.exit;
 
 public class JavaLogBuilder {
 
@@ -20,16 +27,10 @@ public class JavaLogBuilder {
     private static final String CLASS_TEMPLATE = "templates/class.java";
     private String classTemplate;
 
-    private static final String RDF_FACTORY_TEMPLATE = "templates/BaseRDF.java";
-    private String rdfFactoryTemplate;
-
-    private static final String SIB_FACTORY_TEMPLATE = "templates/SIBFactory.java";
-    private String sibFactoryTemplate;
-
-    private static final String DATAPROPERTY_TEMPLATE = "templates/data-property.template";
+    private static final String DATAPROPERTY_TEMPLATE = "templates/data-property.java";
     private String dataPropertyTemplate;
 
-    private static final String OBJECTPROPERTY_TEMPLATE = "templates/object-property.template";
+    private static final String OBJECTPROPERTY_TEMPLATE = "templates/object-property.java";
     private String objectPropertyTemplate;
 
     private static final String UPDATE_DATAPROPERTY_TEMPLATE = "templates/update-data-property.java";
@@ -58,8 +59,6 @@ public class JavaLogBuilder {
 
     JavaLogBuilder() {
         classTemplate = loadTemplate(CLASS_TEMPLATE);
-        rdfFactoryTemplate = loadTemplate(RDF_FACTORY_TEMPLATE);
-        sibFactoryTemplate = loadTemplate(SIB_FACTORY_TEMPLATE);
         dataPropertyTemplate = loadTemplate(DATAPROPERTY_TEMPLATE);
         objectPropertyTemplate = loadTemplate(OBJECTPROPERTY_TEMPLATE);
         updateDataPropertyTemplate = loadTemplate(UPDATE_DATAPROPERTY_TEMPLATE);
@@ -68,6 +67,7 @@ public class JavaLogBuilder {
 
     /**
      * Load template file into string object
+     *
      * @param fileName path to file
      * @return file content or null
      */
@@ -123,24 +123,62 @@ public class JavaLogBuilder {
     }
 
     private void generateFactory() {
-        ST factoryContent;
-        // baserdf.java
-        factoryContent = new ST(rdfFactoryTemplate, '$', '$');
-        factoryContent.add("PACKAGE_NAME", packageName);
+        Pattern pattern = Pattern.compile("templates/base/.*java");
+        Collection<String> files = null;
+            files = getResources(pattern);
 
-        saveFile("BaseRDF.java", factoryContent.render());
+        for (String patternFile : files) {
+            ST factoryContent;
 
-        //sibFactory.java
-        factoryContent = new ST(sibFactoryTemplate, '$', '$');
-        factoryContent.add("PACKAGE_NAME", packageName);
+            String templateContent = loadTemplate(patternFile);
 
-        saveFile("SIBFactory.java", factoryContent.render());
+            factoryContent = new ST(templateContent, '$', '$');
+            factoryContent.add("PACKAGE_NAME", packageName);
+
+            saveFile(getFileName(patternFile), factoryContent.render(), "base");
+        }
+//
+//        // baserdf.java
+//
+//        //sibFactory.java
+//        factoryContent = new ST(sibFactoryTemplate, '$', '$');
+//        factoryContent.add("PACKAGE_NAME", packageName);
+//
+//        saveFile("SIBFactory.java", factoryContent.render());
+//
+//        //sibFactory.java
+//        factoryContent = new ST(kpiproxyTemplate, '$', '$');
+//        factoryContent.add("PACKAGE_NAME", packageName);
+//
+//        saveFile("KPIproxy.java", factoryContent.render());
+    }
+
+    private String getFileName(String path) {
+        Path p = Paths.get(path);
+        return p.getFileName().toString();
     }
 
     private void saveFile(String fileName, String value) {
+        saveFile(fileName, value, null);
+    }
+
+    private void saveFile(String fileName, String value, String additionalPath) {
+        String path = this.outputFolder + "/" + this.packageName.replace(".", "/");
+        if (additionalPath != null)
+            path += "/" + additionalPath;
+
         try {
-            log.log(Level.INFO, "Create file \"" + this.outputFolder +  "/" + this.packageName.replace(".","/") + "/" + fileName + "\"");
-            PrintWriter writer = new PrintWriter(this.outputFolder +  "/" + this.packageName.replace(".","/") + "/" + fileName);
+            log.log(Level.INFO, "Create file \"" + path + "/" + fileName + "\"");
+            File outputDir = new File(path);
+            if (!outputDir.exists()) {
+                log.log(Level.INFO, "Create path \"" + path + "\"");
+                if (!outputDir.mkdirs()) {
+                    System.err.println("Can't create folder \"" + outputDir.getAbsolutePath() + "\"");
+                    exit(2);
+                }
+            }
+
+            PrintWriter writer = new PrintWriter(path + "/" + fileName);
             writer.print(value);
             writer.close();
         } catch (FileNotFoundException ex) {
@@ -167,6 +205,7 @@ public class JavaLogBuilder {
 
     /**
      * Печать структуры класса в шаблоне с сохранением в файл
+     *
      * @param cls содержимое класса
      */
     private void printClass(OntologyObject cls) {
@@ -260,133 +299,86 @@ public class JavaLogBuilder {
     }
 
     /**
-     * Основной метод запускающий генерацию кода
+     * for all elements of java.class.path get a Collection of resources Pattern
+     * pattern = Pattern.compile(".*"); gets all resources
+     *
+     * @param pattern
+     *            the pattern to match
+     * @return the resources in the order they are found
      */
-    public void generate2() {
-        // генерируем базовый класс
-        generateFactory();
-
-/*
-        // пробегаемся по классам
-        ExtendedIterator<OntClass> iter = model.listClasses();
-        while(iter.hasNext()) {
-            OntClass ontclss = iter.next();
-            if (ontclss.getLocalName() == null) {
-                log.log(Level.WARNING, "Parsed class doesn't have a name " + ontclss.getId());
-                continue;
-            }
-            log.log(Level.INFO, "Parse class " + ontclss.getLocalName());
-            String classContent = generateClass(ontclss);
-            saveFile(ontclss.getLocalName() + ".java", classContent);
-
-
-                /*            System.out.println("====== CLASS ==========");
-                OntClass ontclss = iter.next();
-                System.out.println("localname: " + ontclss.getLocalName()); // User
-                System.out.println("namespace: " + ontclss.getNameSpace()); // http://oss.fruct.org/etourism#
-                System.out.println("comment: " + ontclss.getComment(null)); // rdf:comment Описание пользователя (может быть несколько?)
-                ExtendedIterator<OntProperty> propIter = ontclss.listDeclaredProperties();
-                while(propIter.hasNext()) {
-                OntProperty propval = propIter.next();
-                System.out.println("====== PROPERTY ==========");
-                System.out.println("comment: " + propval.getComment(null)); // rdf:comment
-                System.out.println("localname:" + propval.getLocalName()); // name
-                System.out.println("RDFType: " + propval.getRDFType()); // http://www.w3.org/2002/07/owl#DatatypeProperty
-                System.out.println("cardinality: " + propval.getCardinality(propval)); // 0 ???
-                System.out.println("isDatatypeProperty: " + propval.isDatatypeProperty()); // true
-                if (propval.isObjectProperty()) {
-                OntResource res = propval.getRange(); // null для Datatype и ontclass для objectproperty
-                System.out.println("Value type: " + res.getLocalName()); // Location
-                }
-                }
-                */
+    public static Collection<String> getResources(
+            final Pattern pattern){
+        final ArrayList<String> retval = new ArrayList<String>();
+        final String classPath = System.getProperty("java.class.path", ".");
+        final String[] classPathElements = classPath.split(System.getProperty("path.separator"));
+        for(final String element : classPathElements){
+            retval.addAll(getResources(element, pattern));
         }
+        return retval;
     }
 
-    /**
-     * Генерация класса
-     * @param classValue Точка класса
-     * @return код на Java
-     */
-/*    private String generateClass(OntClass classValue) {
-        StringBuilder classProperties = new StringBuilder();
-        StringBuilder updateProperties = new StringBuilder();
-
-        // generate methods for class properties
-        ExtendedIterator<OntProperty> propIter = classValue.listDeclaredProperties();
-        while (propIter.hasNext()) {
-            OntProperty propVal = propIter.next();
-            log.log(Level.INFO, "Parse property \"" + propVal.getLocalName() + "\"");
-            ST classProperty;
-            ST updateProperty;
-            String propType = "String";
-            if (propVal.isDatatypeProperty()) {
-                classProperty = new ST(dataPropertyTemplate, '$', '$');
-                updateProperty = new ST(updateDataPropertyTemplate, '$', '$');
-                OntResource res = propVal.getRange(); // null для Datatype и ontclass для objectproperty
-                ExtendedIterator iter = propVal.listDeclaringClasses(true);
-                log.log(Level.INFO, "Property \"" + propVal.getLocalName() + "\" has type = \"" + res.getLocalName() + "\"");
-                if (res.getLocalName() == null) {
-                    NodeIterator i = res.getModel().listObjects();
-                    //StmtIterator i = res.listProperties();
-                    while (i.hasNext()) {
-                        RDFNode s = i.next();
-                        log.log(Level.INFO, "node: isLiteral=" + s.isLiteral() + "; isResource=" + s.isResource() + "; isAnon=" + s.isAnon());
-                        //s.getModel().listObjects()
-                    }
-                    // сложный тип???
-                    log.log(Level.INFO, "Found complex property: " + res.getRDFType());
-
-                    continue;
-                }
-                if (res != null && !res.getLocalName().equals("string")) {
-                    switch (res.getLocalName()) {
-                        case "Double": {
-                            propType = "Double";
-                            break;
-                        }
-                        case "decimal": {
-                            propType = "Integer";
-                            break;
-                        }
-
-                        default:
-                            System.out.println("Unknown property value type: " + res.getLocalName()); // Location
-                    }
-                }
-
-                //TODO: обработка различных типов данных
-            } else if (propVal.isObjectProperty()) {
-                classProperty = new ST(objectPropertyTemplate, '$', '$');
-                updateProperty = new ST(updateObjectPropertyTemplate, '$', '$');
-                propType = propVal.getRange().getLocalName();
-            } else {
-                //TODO: implement for other property Types
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-
-            classProperty.add("PROPERTY_NAME", propVal.getLocalName());
-            classProperty.add("PROPERTY_URI", propVal.toString());
-            classProperty.add("PROPERTY_TYPE", propType);
-            classProperties.append(classProperty.render());
-
-            updateProperty.add("PROPERTY_NAME", propVal.getLocalName());
-            updateProperty.add("PROPERTY_URI", propVal.toString());
-            updateProperty.add("PROPERTY_TYPE", propType);
-            updateProperties.append(updateProperty.render());
+    private static Collection<String> getResources(
+            final String element,
+            final Pattern pattern){
+        final ArrayList<String> retval = new ArrayList<String>();
+        final File file = new File(element);
+        if(file.isDirectory()){
+            retval.addAll(getResourcesFromDirectory(file, pattern));
+        } else{
+            retval.addAll(getResourcesFromJarFile(file, pattern));
         }
-
-        // generate output file
-        ST classContent;
-        classContent = new ST(classTemplate, '$', '$');
-        classContent.add("PACKAGE_NAME", packageName);
-        classContent.add("CLASS_NAME", classValue.getLocalName());
-        classContent.add("CLASS_URI", classValue.toString());
-        classContent.add("CLASS_PROPERTIES", classProperties.toString());
-        classContent.add("PROPERTIES_UPDATE", updateProperties.toString());
-
-        return classContent.render();
+        return retval;
     }
 
+    private static Collection<String> getResourcesFromJarFile(
+            final File file,
+            final Pattern pattern){
+        final ArrayList<String> retval = new ArrayList<String>();
+        ZipFile zf;
+        try{
+            zf = new ZipFile(file);
+        } catch(final ZipException e){
+            throw new Error(e);
+        } catch(final IOException e){
+            throw new Error(e);
+        }
+        final Enumeration e = zf.entries();
+        while(e.hasMoreElements()){
+            final ZipEntry ze = (ZipEntry) e.nextElement();
+            final String fileName = ze.getName();
+            final boolean accept = pattern.matcher(fileName).matches();
+            if(accept){
+                retval.add(fileName);
+            }
+        }
+        try{
+            zf.close();
+        } catch(final IOException e1){
+            throw new Error(e1);
+        }
+        return retval;
+    }
+
+    private static Collection<String> getResourcesFromDirectory(
+            final File directory,
+            final Pattern pattern){
+        final ArrayList<String> retval = new ArrayList<String>();
+        final File[] fileList = directory.listFiles();
+        for(final File file : fileList){
+            if(file.isDirectory()){
+                retval.addAll(getResourcesFromDirectory(file, pattern));
+            } else{
+                try{
+                    final String fileName = file.getCanonicalPath();
+                    final boolean accept = pattern.matcher(fileName).matches();
+                    if(accept){
+                        retval.add(fileName);
+                    }
+                } catch(final IOException e){
+                    throw new Error(e);
+                }
+            }
+        }
+        return retval;
+    }
 }
-*/

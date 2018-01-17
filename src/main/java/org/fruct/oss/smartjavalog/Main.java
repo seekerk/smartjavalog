@@ -45,14 +45,19 @@ public class Main {
             exit(3);
         }
         
-        // создаем результирующий каталог
-        File outputDir = new File(javalog.getOutputFolder() + "/" + javalog.getPackageName().replace(".","/"));
-        if (!outputDir.exists()) {
-            if (!outputDir.mkdirs()) {
-                System.err.println("Can't create folder \"" + outputDir.getAbsolutePath() + "\"");
-                exit(2);
-            }
-        }
+//        // создаем результирующий каталог
+//        File outputDir = new File(javalog.getOutputFolder() + "/" + javalog.getPackageName().replace(".","/"));
+//        if (!outputDir.exists()) {
+//            if (!outputDir.mkdirs()) {
+//                System.err.println("Can't create folder \"" + outputDir.getAbsolutePath() + "\"");
+//                exit(2);
+//            }
+//        }
+//
+//        File baseOutputDir = new File(outputDir.getAbsolutePath() + "/base");
+//        if (!baseOutputDir.exists()) {
+//            if ()
+//        }
 
         // генерация файлов
         javalog.generate();

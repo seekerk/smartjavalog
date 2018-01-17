@@ -1,11 +1,9 @@
-package $PACKAGE_NAME$;
+package $PACKAGE_NAME$.base;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import sofia_kp.KPICore;
 
 /**
  * The class to implement of single point for smart spaces
@@ -20,7 +18,7 @@ public class SIBFactory {
      */
     private static SIBFactory instance = null;
 
-    private Map<String, KPICore> accessPoints = new HashMap<>();
+    private Map<String, KPIproxy> accessPoints = new HashMap<>();
 
     private SIBFactory(){}
 
@@ -31,14 +29,14 @@ public class SIBFactory {
         return instance;
     }
 
-    public KPICore getAccessPoint() {
+    public KPIproxy getAccessPoint() {
         if (getAccessPoint(defaultPointName) == null)
                 createDefaultAccessPoint();
 
         return getAccessPoint(defaultPointName);
     }
 
-    public KPICore getAccessPoint(String pointName) {
+    public KPIproxy getAccessPoint(String pointName) {
         if (defaultPointName.equals(pointName) && accessPoints.get(pointName) == null)
             createDefaultAccessPoint();
 
@@ -49,8 +47,8 @@ public class SIBFactory {
         return defaultPointName;
     }
 
-    public KPICore createAccessPoint(String name, String host, int port) {
-        KPICore ret = new KPICore(host, port, name);
+    public KPIproxy createAccessPoint(String name, String host, int port) {
+        KPIproxy ret = new KPIproxy(host, port, name);
         accessPoints.put(name, ret);
 
         return ret;
