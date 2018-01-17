@@ -1,5 +1,7 @@
 package $PACKAGE_NAME$;
 
+import android.os.AsyncTask;
+
 import java.util.ArrayList;
 import java.util.Random;
 import sofia_kp.KPICore;
@@ -13,7 +15,7 @@ public abstract class BaseRDF {
     private static Random rand = null;
 
     // загруженные триплеты
-    private ArrayList<ArrayList<String>> triples = null;
+    private final ArrayList<ArrayList<String>> triples = new ArrayList<>();
 
     // разные гадости
     //TODO: заменить на rdg4j
@@ -36,23 +38,14 @@ public abstract class BaseRDF {
     public abstract String getURI();
 
     public void load() {
-        SIBResponse resp;
-        resp = SIBFactory.getInstance().getAccessPoint(_accessPointName).queryRDF(_id, SIB_ANY, SIB_ANY, "uri", "uri");
-        if (!resp.isConfirmed()) {
-            //TODO: change to exception
-            System.err.println("Failed connection");
-            return;
-        }
-        this.triples = resp.query_results;
-        //TODO: DEBUG
-        for (ArrayList<String> t : this.triples) {
-            System.out.println(t);
-        }
+        LoadTask task = new LoadTask(this);
+
+        task.execute();
     }
 
     public ArrayList<String> getStringInTriples(String searchURI) {
         ArrayList<String> ret = new ArrayList<>();
-        if (this.triples == null) {
+        if (this.triples.size() == 0) {
             load();
         }
         for (ArrayList<String> t : this.triples) {
@@ -65,7 +58,7 @@ public abstract class BaseRDF {
 
     public ArrayList<Double> getDoubleInTriples(String searchURI) {
         ArrayList<Double> ret = new ArrayList<>();
-        if (this.triples == null) {
+        if (this.triples.size() == 0) {
             load();
         }
         for (ArrayList<String> t : this.triples) {
@@ -130,5 +123,32 @@ public abstract class BaseRDF {
 
     protected SIBResponse _remove(ArrayList<ArrayList<String>> list) {
         return SIBFactory.getInstance().getAccessPoint(_accessPointName).remove(list);
+    }
+
+    private static class LoadTask extends AsyncTask<Void, Void, Void> {
+        private BaseRDF base;
+
+        public LoadTask(BaseRDF base) {
+            this.base = base;
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            SIBResponse resp;
+            resp = SIBFactory.getInstance().getAccessPoint(base._accessPointName).
+                    queryRDF(base._id, SIB_ANY, SIB_ANY, "uri", "uri");
+            if (!resp.isConfirmed()) {
+                //TODO: change to exception
+                System.err.println("Failed connection");
+                return null;
+            }
+            base.triples.clear();
+            base.triples.addAll(resp.query_results);
+            //TODO: DEBUG
+            for (ArrayList<String> t : base.triples) {
+                System.out.println(t);
+            }
+            return null;
+        }
     }
 }
