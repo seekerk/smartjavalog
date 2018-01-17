@@ -39,6 +39,9 @@ public class SIBFactory {
     }
 
     public KPICore getAccessPoint(String pointName) {
+        if (defaultPointName.equals(pointName) && accessPoints.get(pointName) == null)
+            createDefaultAccessPoint();
+
         return accessPoints.get(pointName);
     }
 
