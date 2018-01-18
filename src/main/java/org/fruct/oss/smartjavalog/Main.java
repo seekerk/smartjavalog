@@ -32,10 +32,12 @@ public class Main {
         javalog.setOwlFile(cmd.getOptionValue("input"));
         javalog.setOutputFolder(cmd.getOptionValue("output", "./output"));
         javalog.setPackageName(cmd.getOptionValue("name"));
+        javalog.setPlatform(cmd.getOptionValue("platform", "default"));
 
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
         System.out.println("Use file \"" + javalog.getOwlFile() + "\"");
         System.out.println("Output folder: \"" + javalog.getOutputFolder() + "\"");
+        System.out.println("Used platform: \"" + javalog.getPlatform() + "\"");
 
         //open file
         try {
@@ -83,6 +85,10 @@ public class Main {
         Option packageNameOpt = new Option("n", "name", true, "package name");
         packageNameOpt.setRequired(true);
         options.addOption(packageNameOpt);
+
+        Option platformOpt = new Option("p", "platform", true, "target platform. Supports \"android\" or \"default\" values");
+        platformOpt.setRequired(false);
+        options.addOption(platformOpt);
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();

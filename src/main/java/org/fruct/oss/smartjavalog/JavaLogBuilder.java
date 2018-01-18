@@ -54,6 +54,11 @@ public class JavaLogBuilder {
      */
     private String outputFolder;
 
+    /**
+     * используемая платформа
+     */
+    private String platform = "default";
+
 
     private OWLOntology ontology = null;
 
@@ -124,8 +129,23 @@ public class JavaLogBuilder {
 
     private void generateFactory() {
         Pattern pattern = Pattern.compile("templates/base/.*java");
-        Collection<String> files = null;
+        Collection<String> files;
             files = getResources(pattern);
+
+        for (String patternFile : files) {
+            ST factoryContent;
+
+            String templateContent = loadTemplate(patternFile);
+
+            factoryContent = new ST(templateContent, '$', '$');
+            factoryContent.add("PACKAGE_NAME", packageName);
+
+            saveFile(getFileName(patternFile), factoryContent.render(), "base");
+        }
+
+        // платформо-специфичные шаблоны
+        pattern = Pattern.compile("templates/" + platform + "/.*java");
+        files = getResources(pattern);
 
         for (String patternFile : files) {
             ST factoryContent;
@@ -380,5 +400,13 @@ public class JavaLogBuilder {
             }
         }
         return retval;
+    }
+
+    public void setPlatform(String platform) {
+        this.platform = platform;
+    }
+
+    public String getPlatform() {
+        return platform;
     }
 }

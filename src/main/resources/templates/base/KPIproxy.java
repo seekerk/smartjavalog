@@ -62,88 +62,44 @@ public class KPIproxy {
     /**
      * Async leave
      */
-    private static class LeaveTask extends AsyncTask<Void, Void, Void> {
-
-        KPIproxy that;
-
-        List<TaskListener> listeners = new ArrayList<>();
-        Exception ex = null;
+    private static class LeaveTask extends SIBAsyncTask {
 
         LeaveTask(KPIproxy proxy) {
-            this.that = proxy;
+            super(proxy);
         }
 
         @Override
-        protected Void doInBackground(Void... voids) {
-            SIBResponse resp = null;
+        protected void doInBackground() {
             try {
-                resp = that.core.leave();
+                this.response = proxy.core.leave();
             } catch (SecurityException ex) {
                 this.ex = ex;
                 Log.w(TAG, ex);
             }
             //TODO: проверить корректность подключения
-            Log.d(TAG, "Leave result: " + resp);
-            that.isConnected = false;
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            if (ex != null) {
-                for (TaskListener listener : listeners) {
-                    listener.onError(ex);
-                }
-            } else {
-                for (TaskListener listener : listeners) {
-                    listener.onSuccess();
-                }
-            }
+            Log.d(TAG, "Leave result: " + this.response);
+            proxy.isConnected = false;
         }
     }
 
-    public static class JoinTask extends AsyncTask<Void, Void, Void> {
-        KPIproxy that;
-
-        List<TaskListener> listeners = new ArrayList<>();
-        Exception ex = null;
+    public static class JoinTask extends SIBAsyncTask {
 
         JoinTask(KPIproxy proxy) {
-            this.that = proxy;
+            super(proxy);
         }
 
         @Override
-        protected Void doInBackground(Void... voids) {
-            SIBResponse resp = null;
+        protected void doInBackground() {
             try {
-                resp = that.core.join();
+                this.response = proxy.core.join();
             } catch (SecurityException ex) {
                 this.ex = ex;
-                return null;
+                return;
             }
             //TODO: проверить корректность подключения
-            Log.d(TAG, "Joint result: " + resp);
-            that.isConnected = true;
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            if (ex != null) {
-                for (TaskListener listener : listeners) {
-                    listener.onError(ex);
-                }
-            } else {
-                for (TaskListener listener : listeners) {
-                    listener.onSuccess();
-                }
-            }
-        }
-
-        public void addListener(TaskListener taskListener) {
-            listeners.add(taskListener);
+            Log.d(TAG, "Joint result: " + this.response);
+            proxy.isConnected = true;
+            return;
         }
     }
 }

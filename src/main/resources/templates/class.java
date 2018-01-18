@@ -1,5 +1,8 @@
 package $PACKAGE_NAME$;
 
+import $PACKAGE_NAME$.base.BaseRDF;
+import $PACKAGE_NAME$.base.SIBFactory;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import sofia_kp.KPICore;
