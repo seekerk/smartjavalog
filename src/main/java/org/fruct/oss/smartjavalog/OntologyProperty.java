@@ -13,7 +13,7 @@ public class OntologyProperty {
 
     private IRI name;
 
-    private List<OWL2Datatype> simpleDataTypes = new ArrayList<>();
+    private List<OntologyComplexDataType.DataTypeWithValue> simpleDataTypes = new ArrayList<>();
 
     private List<IRI> complexDataTypes = new ArrayList<>();
 
@@ -22,7 +22,7 @@ public class OntologyProperty {
     }
 
     public void addDataType(OWL2Datatype type) {
-        simpleDataTypes.add(type);
+        simpleDataTypes.add(new OntologyComplexDataType.DataTypeWithValue(type, null));
         System.err.println("Add type \"" + type + "\" for data property \"" + name.getFragment() + "\"");
     }
 
@@ -35,19 +35,20 @@ public class OntologyProperty {
      * Список простых типов данных собранных из всех вариантов
      * @return список типов
      */
-    public List<OWL2Datatype> getOWLDataTypes() {
-        List<OWL2Datatype> ret = new ArrayList<>(simpleDataTypes);
+    public List<OntologyComplexDataType.DataTypeWithValue> getOWLDataTypes() {
+        List<OntologyComplexDataType.DataTypeWithValue> ret = new ArrayList<>(simpleDataTypes);
         //return simpleDataTypes;
         log.info("complexTypes: " + complexDataTypes);
         for (IRI type: complexDataTypes) {
             OntologyComplexDataType dataType = OntologyFactory.getInstance().getDataType(type);
-            ret.addAll(dataType.getOWLDataTypes());
+            ret = dataType.getOWLDataTypes();
         }
 
         // поиск среди известных типов
         OntologyComplexDataType dataType = OntologyFactory.getInstance().getDataType(name);
-        if (dataType != null)
-            ret.addAll(dataType.getOWLDataTypes());
+        if (dataType != null) {
+            ret = dataType.getOWLDataTypes(ret);
+        }
 
         return ret;
     }

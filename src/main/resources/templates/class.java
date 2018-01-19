@@ -3,6 +3,7 @@ package $PACKAGE_NAME$;
 import $PACKAGE_NAME$.base.BaseRDF;
 import $PACKAGE_NAME$.base.SIBFactory;
 
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
 import sofia_kp.KPICore;
@@ -49,7 +50,7 @@ public class $CLASS_NAME$ extends BaseRDF {
         ArrayList<ArrayList<String>> removeTriples = new ArrayList();
         
         // 1. проверяем, новый ли индивид. Если новый, то у него нет триплетов с сиба
-        if (getStringInTriples(RDF_TYPE_URI).isEmpty()) {
+        if (getInTriples(RDF_TYPE_URI).isEmpty()) {
             // Добавляем триплет для класса индивида
             newTriples.add(createTriple(getID(), RDF_TYPE_URI, getURI()));
         }

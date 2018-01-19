@@ -2,6 +2,7 @@ package org.fruct.oss.smartjavalog;
 
 import org.semanticweb.owlapi.model.*;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -11,7 +12,10 @@ public class OntologyVisitor implements OWLObjectVisitor {
     private Logger log = Logger.getLogger(OntologyVisitor.class.getName());
 
     @Override
+    @ParametersAreNonnullByDefault
     public void visit(OWLDataPropertyRangeAxiom axiom) {
+        log.info("Parse " + axiom.toString());
+
         axiom.getRange().accept(new OWLDataRangeVisitor() {
             @Override
             public void visit(OWLDataOneOf node) {
@@ -48,17 +52,10 @@ public class OntologyVisitor implements OWLObjectVisitor {
     }
 
     @Override
-    public void visit(OWLDatatypeDefinitionAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-    }
-
-    @Override
-    public void visit(OWLObjectProperty property) {
-        throw new IllegalStateException("Not implemented for: " + property);
-    }
-
-    @Override
+    @ParametersAreNonnullByDefault
     public void visit(OWLDeclarationAxiom axiom) {
+        log.info("Parse " + axiom);
+
         switch (axiom.getEntity().getEntityType().getName()) {
             case "DataProperty": {
                 OntologyFactory.getInstance().addDataType(axiom.getEntity().getIRI());
@@ -79,6 +76,121 @@ public class OntologyVisitor implements OWLObjectVisitor {
             }
         }
     }
+
+    /**
+     * свойство класса
+     * @param axiom контейнер свойства
+     */
+    @Override
+    @ParametersAreNonnullByDefault
+    public void visit(OWLDataPropertyDomainAxiom axiom) {
+        log.info("Parse " + axiom.toString());
+
+        //System.err.println(axiom);
+        IRI property = axiom.getProperty().dataPropertiesInSignature().collect(Collectors.toList()).get(0).getIRI(); // свойство класса
+        IRI cls = axiom.classesInSignature().collect(Collectors.toList()).get(0).getIRI();
+        OntologyFactory.getInstance().addClassWithProperty(cls, property);
+    }
+
+    /**
+     * Комментарии к объектам
+     * @param axiom контейнер комментария
+     */
+    @Override
+    @ParametersAreNonnullByDefault
+    public void visit(OWLAnnotationAssertionAxiom axiom) {
+        log.info("Parse " + axiom.toString());
+
+        //System.err.println(axiom.getSubject().asIRI().get().getFragment()); // аннотируемый объект
+
+        //System.err.println(axiom.getValue());
+        axiom.getValue().accept(new OWLAnnotationValueVisitor() {
+            @Override
+            public void visit(OWLLiteral node) {
+                //System.err.println(node.getLiteral()); // текст сообщения
+                if (axiom.getSubject().asIRI().isPresent())
+                    OntologyFactory.getInstance().addComment(axiom.getSubject().asIRI().get(), node.getLiteral());
+                else
+                    throw new IllegalStateException("Not implemented");
+            }
+        });
+    }
+
+    @Override
+    @ParametersAreNonnullByDefault
+    public void visit(OWLObjectPropertyRangeAxiom axiom) {
+        log.info("Parse " + axiom.toString());
+
+        boolean notParsed = true;
+
+        OWLObjectProperty property = axiom.objectPropertiesInSignature().collect(Collectors.toList()).get(0);
+
+        List<OWLDatatype> datatypes = axiom.datatypesInSignature().collect(Collectors.toList());
+        if (datatypes.size() > 0) {
+            notParsed = false;
+            if (datatypes.size() > 1) {
+                System.err.println(axiom);
+                throw new IllegalStateException("Not implemented for datatypes size = " + datatypes.size());
+            }
+
+            OntologyFactory.getInstance().addPropertyType(property,
+                    datatypes.get(0).getBuiltInDatatype());
+            log.info("Add data property");
+        }
+
+        List<OWLDataProperty> properties = axiom.dataPropertiesInSignature().collect(Collectors.toList());
+        if (properties.size() > 0) {
+            notParsed = false;
+            if (properties.size() > 1) {
+                System.err.println(axiom);
+                throw new IllegalStateException("Not implemented for data properties size = " + datatypes.size());
+            }
+            OntologyFactory.getInstance().addPropertyType(property,
+                    properties.get(0).getIRI());
+            log.info("Add complex data property: " + properties.get(0).getIRI());
+        }
+
+        List<OWLClass> classes = axiom.classesInSignature().collect(Collectors.toList());
+        if (classes.size() > 0) {
+            notParsed = false;
+            if (classes.size() > 1) {
+                System.err.println(axiom);
+                throw  new IllegalStateException("Not implemented for multiple classes size=" + classes.size());
+            }
+            OntologyFactory.getInstance().addPropertyType(property,
+                    classes.get(0).getIRI());
+            log.info("Add class value property: " + classes.get(0).getIRI());
+        }
+
+        if (notParsed)
+            throw new IllegalStateException("Not implemented");
+    }
+
+    @Override
+    @ParametersAreNonnullByDefault
+    public void visit(OWLObjectPropertyDomainAxiom axiom) {
+        log.info("Parse " + axiom.toString());
+
+        List<OWLClass> classes = axiom.classesInSignature().collect(Collectors.toList());
+        if (classes.size() != 1) {
+            System.err.println(axiom);
+            throw new IllegalStateException("Not implemented for classes size=" + classes.size());
+        }
+
+        List<OWLObjectProperty> properties = axiom.objectPropertiesInSignature().collect(Collectors.toList());
+        if (properties.size() != 1) {
+            System.err.println(axiom);
+            throw new IllegalStateException("Not implemented for properties size=" + properties.size());
+        }
+
+        OntologyFactory.getInstance().addClassWithProperty(classes.get(0).getIRI(), properties.get(0).getIRI());
+    }
+
+    @Override
+    public void visit(OWLDatatypeDefinitionAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLObjectProperty property) { throw new IllegalStateException("Not implemented for: " + property); }
 
     @Override
     public void visit(OWLSubClassOfAxiom axiom) {
@@ -178,345 +290,219 @@ public class OntologyVisitor implements OWLObjectVisitor {
     @Override
     public void visit(SWRLDataRangeAtom node) {
         throw new IllegalStateException("Not implemented for: " + node);
-
     }
 
     @Override
     public void visit(OWLDataAllValuesFrom ce) {
         throw new IllegalStateException("Not implemented for: " + ce);
-
     }
 
     @Override
     public void visit(OWLDataComplementOf node) {
         throw new IllegalStateException("Not implemented for: " + node);
-
     }
 
     @Override
     public void visit(OWLDataMaxCardinality ce) {
         throw new IllegalStateException("Not implemented for: " + ce);
-
     }
 
     @Override
     public void visit(OWLDataMinCardinality ce) {
         throw new IllegalStateException("Not implemented for: " + ce);
-
     }
 
     @Override
     public void visit(OWLDataProperty property) {
         throw new IllegalStateException("Not implemented for: " + property);
-
     }
 
     @Override
     public void visit(OWLDataSomeValuesFrom ce) {
         throw new IllegalStateException("Not implemented for: " + ce);
-
     }
 
     @Override
     public void visit(OWLFacetRestriction node) {
         throw new IllegalStateException("Not implemented for: " + node);
-
     }
 
     @Override
     public void visit(OWLObjectComplementOf ce) {
         throw new IllegalStateException("Not implemented for: " + ce);
-
     }
 
     @Override
     public void visit(SWRLLiteralArgument node) {
         throw new IllegalStateException("Not implemented for: " + node);
-
     }
 
     @Override
     public void visit(OWLObjectAllValuesFrom ce) {
         throw new IllegalStateException("Not implemented for: " + ce);
-
     }
 
     @Override
     public void visit(SWRLDataPropertyAtom node) {
         throw new IllegalStateException("Not implemented for: " + node);
-
     }
 
     @Override
     public void visit(OWLDataExactCardinality ce) {
         throw new IllegalStateException("Not implemented for: " + ce);
-
     }
 
     @Override
     public void visit(OWLDataIntersectionOf node) {
         throw new IllegalStateException("Not implemented for: " + node);
-
     }
 
     @Override
     public void visit(OWLObjectIntersectionOf ce) {
         throw new IllegalStateException("Not implemented for: " + ce);
-
     }
 
     @Override
     public void visit(OWLObjectMaxCardinality ce) {
         throw new IllegalStateException("Not implemented for: " + ce);
-
     }
 
     @Override
     public void visit(OWLObjectMinCardinality ce) {
         throw new IllegalStateException("Not implemented for: " + ce);
-
     }
 
     @Override
     public void visit(OWLObjectSomeValuesFrom ce) {
         throw new IllegalStateException("Not implemented for: " + ce);
-
     }
 
     @Override
     public void visit(OWLDatatypeRestriction node) {
         throw new IllegalStateException("Not implemented for: " + node);
-
     }
 
     @Override
     public void visit(OWLDisjointUnionAxiom axiom) {
         throw new IllegalStateException("Not implemented for: " + axiom);
-
     }
 
     @Override
-    public void visit(OWLObjectInverseOf property) {
-        throw new IllegalStateException("Not implemented for: " + property);
-
-    }
+    public void visit(OWLObjectInverseOf property) { throw new IllegalStateException("Not implemented for: " + property); }
 
     @Override
     public void visit(SWRLIndividualArgument node) {
         throw new IllegalStateException("Not implemented for: " + node);
-
     }
 
     @Override
     public void visit(SWRLObjectPropertyAtom node) {
         throw new IllegalStateException("Not implemented for: " + node);
-
     }
 
     @Override
     public void visit(SWRLSameIndividualAtom node) {
         throw new IllegalStateException("Not implemented for: " + node);
-
     }
 
     @Override
-    public void visit(OWLClassAssertionAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
-    }
+    public void visit(OWLClassAssertionAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
     public void visit(OWLObjectExactCardinality ce) {
         throw new IllegalStateException("Not implemented for: " + ce);
-
     }
 
     @Override
-    public void visit(OWLSameIndividualAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
-    }
+    public void visit(OWLSameIndividualAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLDisjointClassesAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
-    }
+    public void visit(OWLDisjointClassesAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLNamedIndividual individual) {
-        throw new IllegalStateException("Not implemented for: " + individual);
-
-    }
+    public void visit(OWLNamedIndividual individual) { throw new IllegalStateException("Not implemented for: " + individual); }
 
     @Override
-    public void visit(OWLAnnotationProperty property) {
-        throw new IllegalStateException("Not implemented for: " + property);
-
-    }
+    public void visit(OWLAnnotationProperty property) { throw new IllegalStateException("Not implemented for: " + property); }
 
     @Override
-    public void visit(OWLEquivalentClassesAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
-    }
+    public void visit(OWLEquivalentClassesAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLSubDataPropertyOfAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
-    }
-
-    /**
-     * свойство класса
-     * @param axiom
-     */
-    @Override
-    public void visit(OWLDataPropertyDomainAxiom axiom) {
-        //System.err.println(axiom);
-        IRI property = axiom.getProperty().dataPropertiesInSignature().collect(Collectors.toList()).get(0).getIRI(); // свойство класса
-        IRI cls = axiom.classesInSignature().collect(Collectors.toList()).get(0).getIRI();
-        OntologyFactory.getInstance().addClassWithProperty(cls, property);
-    }
+    public void visit(OWLSubDataPropertyOfAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLSubPropertyChainOfAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
-    }
-
-    /**
-     * Комментарии к объектам
-     * @param axiom
-     */
-    @Override
-    public void visit(OWLAnnotationAssertionAxiom axiom) {
-        //System.err.println(axiom);
-
-        //System.err.println(axiom.getSubject().asIRI().get().getFragment()); // аннотируемый объект
-
-        //System.err.println(axiom.getValue());
-        axiom.getValue().accept(new OWLAnnotationValueVisitor() {
-            @Override
-            public void visit(OWLLiteral node) {
-                //System.err.println(node.getLiteral()); // текст сообщения
-                OntologyFactory.getInstance().addComment(axiom.getSubject().asIRI().get(), node.getLiteral());
-            }
-        });
-    }
+    public void visit(OWLSubPropertyChainOfAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLAnonymousIndividual individual) {
-        throw new IllegalStateException("Not implemented for: " + individual);
-
-    }
+    public void visit(OWLAnonymousIndividual individual) { throw new IllegalStateException("Not implemented for: " + individual); }
 
     @Override
-    public void visit(OWLObjectPropertyRangeAxiom axiom) {
-        OWLObjectProperty property = axiom.objectPropertiesInSignature().collect(Collectors.toList()).get(0);
-
-        List<OWLDatatype> datatypes = axiom.datatypesInSignature().collect(Collectors.toList());
-        if (datatypes.size() > 0) {
-            if (datatypes.size() > 1) {
-                System.err.println(axiom);
-                throw new IllegalStateException("Not implemented for datatypes size = " + datatypes.size());
-            }
-
-            OntologyFactory.getInstance().addPropertyType(property,
-                    datatypes.get(0).getBuiltInDatatype());
-            log.info("Add data property");
-            return;
-        }
-
-        List<OWLDataProperty> properties = axiom.dataPropertiesInSignature().collect(Collectors.toList());
-        if (properties.size() > 0) {
-            if (properties.size() > 1) {
-                System.err.println(axiom);
-                throw new IllegalStateException("Not implemented for data properties size = " + datatypes.size());
-            }
-            OntologyFactory.getInstance().addPropertyType(property,
-                    properties.get(0).getIRI());
-            log.info("Add complex data property: " + properties.get(0).getIRI());
-            return;
-        }
-
-        List<OWLClass> classes = axiom.classesInSignature().collect(Collectors.toList());
-        if (classes.size() > 0) {
-            if (classes.size() > 1) {
-                System.err.println(axiom);
-                throw  new IllegalStateException("Not implemented for multiple classes size=" + classes.size());
-            }
-            OntologyFactory.getInstance().addPropertyType(property,
-                    classes.get(0).getIRI());
-            log.info("Add class value property: " + classes.get(0).getIRI());
-            return;
-        }
-
-        throw new IllegalStateException("Not implemented");
-    }
+    public void visit(OWLSubObjectPropertyOfAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLSubObjectPropertyOfAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
-    }
+    public void visit(SWRLDifferentIndividualsAtom node) { throw new IllegalStateException("Not implemented for: " + node); }
 
     @Override
-    public void visit(SWRLDifferentIndividualsAtom node) {
-        throw new IllegalStateException("Not implemented for: " + node);
-
-    }
+    public void visit(OWLDifferentIndividualsAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLDifferentIndividualsAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
-    }
+    public void visit(OWLDataPropertyAssertionAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLObjectPropertyDomainAxiom axiom) {
-        List<OWLClass> classes = axiom.classesInSignature().collect(Collectors.toList());
-        if (classes.size() != 1) {
-            System.err.println(axiom);
-            throw new IllegalStateException("Not implemented for classes size=" + classes.size());
-        }
-
-        List<OWLObjectProperty> properties = axiom.objectPropertiesInSignature().collect(Collectors.toList());
-        if (properties.size() != 1) {
-            System.err.println(axiom);
-            throw new IllegalStateException("Not implemented for properties size=" + properties.size());
-        }
-
-        OntologyFactory.getInstance().addClassWithProperty(classes.get(0).getIRI(), properties.get(0).getIRI());
-    }
+    public void visit(OWLDisjointDataPropertiesAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLDataPropertyAssertionAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
-    }
+    public void visit(OWLFunctionalDataPropertyAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLDisjointDataPropertiesAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
-    }
+    public void visit(OWLAnnotationPropertyRangeAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLFunctionalDataPropertyAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
-    }
+    public void visit(OWLInverseObjectPropertiesAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLAnnotationPropertyRangeAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
-
-    }
+    public void visit(OWLObjectPropertyAssertionAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
     @Override
-    public void visit(OWLInverseObjectPropertiesAxiom axiom) {
-        throw new IllegalStateException("Not implemented for: " + axiom);
+    public void visit(OWLReflexiveObjectPropertyAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 
-    }
+    @Override
+    public void visit(OWLSubAnnotationPropertyOfAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLSymmetricObjectPropertyAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLAnnotationPropertyDomainAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLAsymmetricObjectPropertyAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLDisjointObjectPropertiesAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLEquivalentDataPropertiesAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLFunctionalObjectPropertyAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLTransitiveObjectPropertyAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLIrreflexiveObjectPropertyAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLEquivalentObjectPropertiesAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLNegativeDataPropertyAssertionAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLInverseFunctionalObjectPropertyAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
+
+    @Override
+    public void visit(OWLNegativeObjectPropertyAssertionAxiom axiom) { throw new IllegalStateException("Not implemented for: " + axiom); }
 }

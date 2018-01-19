@@ -1,45 +1,107 @@
 package org.fruct.oss.smartjavalog;
 
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataOneOf;
-import org.semanticweb.owlapi.model.OWLDatatype;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 class OntologyComplexDataType {
 
     private IRI name;
 
-    OWLDatatype type = null;
+    List<DataTypeWithValue> types = null;
 
-    OWLDataOneOf oneOfType = null;
+    /** если это один из многих */
+    private boolean oneOfType = false;
 
     OntologyComplexDataType(IRI name) {
         this.name = name;
     }
 
-    void setSimpleType(OWLDatatype type) {
-        if (this.type != null)
-            throw new IllegalStateException("Multiple call of setSimpleType()");
+    public void setType(OWLDatatype type) {
+        if (this.types != null)
+            throw new IllegalStateException("Multiple call of setType()");
 
-        this.type = type;
+        this.types = new ArrayList<>(1);
+        this.types.add(new DataTypeWithValue(type.getBuiltInDatatype(), null));
     }
 
-    public void setOneOfType(OWLDataOneOf oneOfType) {
-        if (this.oneOfType != null)
-            throw new IllegalStateException("Multiple call of setOneOfType()");
-        this.oneOfType = oneOfType;
-    }
+    public void setType(OWLDataOneOf oneOfType) {
+        if (this.types != null)
+            throw new IllegalStateException("Multiple call of setType()");
 
-    public Collection<? extends OWL2Datatype> getOWLDataTypes() {
-        List<OWL2Datatype> ret = new ArrayList<>();
-        if (type != null) {
-            ret.add(type.getBuiltInDatatype());
+        List<OWLLiteral> items = oneOfType.values().collect(Collectors.toList());
+        this.types = new ArrayList<>(items.size());
+        for (OWLLiteral item : items) {
+            System.err.println("Item = " + item.getDatatype() + ": " + item.getLiteral() + " (" + item + ")");
+
+            boolean isKnownType = false;
+            for (DataTypeWithValue oldType : this.types) {
+                if (oldType.type.equals(item.getDatatype().getBuiltInDatatype())) {
+                    oldType.values.add(item.getLiteral());
+                    isKnownType = true;
+                    break;
+                }
+            }
+
+            if (!isKnownType)
+                this.types.add(new DataTypeWithValue(item.getDatatype().getBuiltInDatatype(), item.getLiteral()));
         }
-        System.err.println(ret);
-        return ret;
+
+        this.oneOfType = true;
+    }
+
+    public boolean isOnOfType() {
+        return oneOfType;
+    }
+
+    public List<DataTypeWithValue> getOWLDataTypes() {
+        return this.types;
+    }
+
+    public List<DataTypeWithValue> getOWLDataTypes(List<DataTypeWithValue> otherTypes) {
+        if (otherTypes == null)
+            return this.types;
+
+        if (otherTypes.size() == 0) {
+            otherTypes.addAll(this.types);
+        } else {
+            for (DataTypeWithValue oldType : this.types) {
+                boolean isKnownType = false;
+                for (DataTypeWithValue newType: otherTypes) {
+                    if (oldType.type.equals(newType.type)) {
+                        oldType.values.addAll(newType.values);
+                        isKnownType = true;
+                        break;
+                    }
+                }
+                if (!isKnownType)
+                    otherTypes.add(oldType);
+            }
+        }
+
+        return otherTypes;
+    }
+
+    public static class DataTypeWithValue {
+        OWL2Datatype type = null;
+        List<String> values = null;
+
+        DataTypeWithValue(OWL2Datatype type, String value) {
+            this.type = type;
+            values = new ArrayList<>(1);
+            this.values.add(value);
+        }
+
+        public OWL2Datatype getType() {
+            return type;
+        }
+
+        public List<String> getValue() {
+            return values;
+        }
     }
 }

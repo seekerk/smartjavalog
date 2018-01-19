@@ -60,13 +60,13 @@ public class OntologyFactory {
 
     public void addDataType(IRI dataType, OWLDatatype simpleType) {
         addDataType(dataType);
-        types.get(dataType.getIRIString()).setSimpleType(simpleType);
+        types.get(dataType.getIRIString()).setType(simpleType);
         System.err.println("Set simple data type \"" + simpleType + "\" for value \"" +dataType.getFragment() + "\"");
     }
 
     public void addDataType(IRI dataType, OWLDataOneOf oneOfType) {
         addDataType(dataType);
-        types.get(dataType.getIRIString()).setOneOfType(oneOfType);
+        types.get(dataType.getIRIString()).setType(oneOfType);
         System.err.println("value2: " + oneOfType.values().collect(Collectors.toList()).get(1).getLiteral() +
                 "; " + oneOfType.values().collect(Collectors.toList()).get(1).getDatatype());
 

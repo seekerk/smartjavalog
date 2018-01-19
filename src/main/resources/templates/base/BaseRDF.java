@@ -43,7 +43,7 @@ public abstract class BaseRDF {
         task.execute();
     }
 
-    public ArrayList<String> getStringInTriples(String searchURI) {
+    public ArrayList<String> getInTriples(String searchURI) {
         ArrayList<String> ret = new ArrayList<>();
         if (this.triples.size() == 0) {
             load();
@@ -51,19 +51,6 @@ public abstract class BaseRDF {
         for (ArrayList<String> t : this.triples) {
             if (t.contains(searchURI)) {
                 ret.add(t.get(2));
-            }
-        }
-        return ret;
-    }
-
-    public ArrayList<Double> getDoubleInTriples(String searchURI) {
-        ArrayList<Double> ret = new ArrayList<>();
-        if (this.triples.size() == 0) {
-            load();
-        }
-        for (ArrayList<String> t : this.triples) {
-            if (t.contains(searchURI)) {
-                ret.add(Double.parseDouble(t.get(2)));
             }
         }
         return ret;

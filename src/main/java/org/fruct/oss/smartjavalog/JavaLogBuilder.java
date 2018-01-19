@@ -30,6 +30,9 @@ public class JavaLogBuilder {
     private static final String DATAPROPERTY_TEMPLATE = "templates/data-property.java";
     private String dataPropertyTemplate;
 
+    private static final String SETDATAPROPERTY_TEMPLATE = "templates/set-data-property.java";
+    private String setDataPropertyTemplate;
+
     private static final String OBJECTPROPERTY_TEMPLATE = "templates/object-property.java";
     private String objectPropertyTemplate;
 
@@ -65,6 +68,7 @@ public class JavaLogBuilder {
     JavaLogBuilder() {
         classTemplate = loadTemplate(CLASS_TEMPLATE);
         dataPropertyTemplate = loadTemplate(DATAPROPERTY_TEMPLATE);
+        setDataPropertyTemplate = loadTemplate(SETDATAPROPERTY_TEMPLATE);
         objectPropertyTemplate = loadTemplate(OBJECTPROPERTY_TEMPLATE);
         updateDataPropertyTemplate = loadTemplate(UPDATE_DATAPROPERTY_TEMPLATE);
         updateObjectPropertyTemplate = loadTemplate(UPDATE_OBJECTPROPERTY_TEMPLATE);
@@ -243,40 +247,41 @@ public class JavaLogBuilder {
         //пробегаемся по свойствам
         Map<String, IRI> classProperties = cls.getProperties();
         for (IRI property : classProperties.values()) {
+            String propertyName = property.getFragment().substring(0,1).toUpperCase() + property.getFragment().substring(1);
             if (OntologyFactory.getInstance().isDataProperty(property)) {
                 // если это не класс, а данные, то выбираем тип
                 log.info("Found data property \"" + property.getFragment() + "\" for class \"" + cls.getName() + "\"");
-                List<OWL2Datatype> types = OntologyFactory.getInstance().getProperty(property).getOWLDataTypes();
-                System.err.println("Types count=" + types.size());
-                for (OWL2Datatype type : types) {
-                    ST propertyTemplate = new ST(dataPropertyTemplate, '$', '$');
-                    ST updatePropertyTemplate = new ST(updateDataPropertyTemplate, '$', '$');
-                    propertyTemplate.add("PROPERTY_NAME", property.getFragment());
-                    propertyTemplate.add("PROPERTY_URI", property.getIRIString());
-                    propertyTemplate.add("PROPERTY_TYPE", getJavaType(type));
-                    propertyCollector.append(propertyTemplate.render());
+                List<OntologyComplexDataType.DataTypeWithValue> types = OntologyFactory.getInstance().getProperty(property).getOWLDataTypes();
+                System.err.println("Property " + property.getFragment() + " has types count=" + types.size());
 
-                    updatePropertyTemplate.add("PROPERTY_NAME", property.getFragment());
-                    updatePropertyTemplate.add("PROPERTY_URI", property.getIRIString());
-                    updatePropertyTemplate.add("PROPERTY_TYPE", getJavaType(type));
-                    updatePropertyCollector.append(updatePropertyTemplate.render());
-
+                StringBuilder setPropertyCollector = new StringBuilder();
+                // пробегаемся по типам
+                for (OntologyComplexDataType.DataTypeWithValue type : types) {
+                    ST setPropertyTemplate = new ST(setDataPropertyTemplate, '$', '$');
+                    setPropertyTemplate.add("PROPERTY_NAME", propertyName);
+                    setPropertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                    setPropertyTemplate.add("PROPERTY_TYPE", getJavaType(type.type));
+                    setPropertyCollector.append(setPropertyTemplate.render());
                 }
 
                 if (types.size() == 0) {
-                    // если тип данных не указан, то по умолчанию это строка
-                    ST propertyTemplate = new ST(dataPropertyTemplate, '$', '$');
-                    ST updatePropertyTemplate = new ST(updateDataPropertyTemplate, '$', '$');
-                    propertyTemplate.add("PROPERTY_NAME", property.getFragment());
-                    propertyTemplate.add("PROPERTY_URI", property.getIRIString());
-                    propertyTemplate.add("PROPERTY_TYPE", "String");
-                    propertyCollector.append(propertyTemplate.render());
-
-                    updatePropertyTemplate.add("PROPERTY_NAME", property.getFragment());
-                    updatePropertyTemplate.add("PROPERTY_URI", property.getIRIString());
-                    updatePropertyTemplate.add("PROPERTY_TYPE", "String");
-                    updatePropertyCollector.append(updatePropertyTemplate.render());
+                    ST setPropertyTemplate = new ST(setDataPropertyTemplate, '$', '$');
+                    setPropertyTemplate.add("PROPERTY_NAME", propertyName);
+                    setPropertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                    setPropertyTemplate.add("PROPERTY_TYPE", "String");
+                    setPropertyCollector.append(setPropertyTemplate.render());
                 }
+
+                ST propertyTemplate = new ST(dataPropertyTemplate, '$', '$');
+                ST updatePropertyTemplate = new ST(updateDataPropertyTemplate, '$', '$');
+                propertyTemplate.add("PROPERTY_NAME", propertyName);
+                propertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                propertyTemplate.add("SET_DATA_PROPERTY", setPropertyCollector.toString());
+                propertyCollector.append(propertyTemplate.render());
+
+                updatePropertyTemplate.add("PROPERTY_NAME", propertyName);
+                updatePropertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                updatePropertyCollector.append(updatePropertyTemplate.render());
 
             } else {
                 // это класс, просто добавяем к списку
@@ -284,12 +289,12 @@ public class JavaLogBuilder {
                 ST propertyTemplate = new ST(objectPropertyTemplate, '$', '$');
                 ST updatePropertyTemplate = new ST(updateObjectPropertyTemplate, '$', '$');
                 String propType = OntologyFactory.getInstance().getProperty(property).getClassValue();
-                propertyTemplate.add("PROPERTY_NAME", property.getFragment());
+                propertyTemplate.add("PROPERTY_NAME", propertyName);
                 propertyTemplate.add("PROPERTY_URI", property.getIRIString());
                 propertyTemplate.add("PROPERTY_TYPE", propType);
                 propertyCollector.append(propertyTemplate.render());
 
-                updatePropertyTemplate.add("PROPERTY_NAME", property.getFragment());
+                updatePropertyTemplate.add("PROPERTY_NAME", propertyName);
                 updatePropertyTemplate.add("PROPERTY_URI", property.getIRIString());
                 updatePropertyTemplate.add("PROPERTY_TYPE", propType);
                 updatePropertyCollector.append(updatePropertyTemplate.render());
@@ -312,6 +317,15 @@ public class JavaLogBuilder {
             }
             case "XSD_STRING": {
                 return "String";
+            }
+            case "XSD_BOOLEAN": {
+                return "Boolean";
+            }
+            case "XSD_INTEGER": {
+                return "Integer";
+            }
+            case "XSD_DECIMAL": {
+                return "Double";
             }
             default:
                 throw new IllegalStateException("Not implemented for " + type.name());
