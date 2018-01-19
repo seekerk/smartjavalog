@@ -2,6 +2,7 @@ package $PACKAGE_NAME$;
 
 import $PACKAGE_NAME$.base.BaseRDF;
 import $PACKAGE_NAME$.base.SIBFactory;
+import $PACKAGE_NAME$.base.TaskListener;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -39,34 +40,64 @@ public class $CLASS_NAME$ extends BaseRDF {
 
     $CLASS_PROPERTIES$
 
-    public void update() {
+    public InteractionSIBTask update() {
+        final InteractionSIBTask task = new InteractionSIBTask();
         // update triple store
-        load();
+        load().addListener(new TaskListener() {
+            @Override
+            public void onSuccess(SIBResponse response) {
 
-        // триплеты для добавления
-        ArrayList<ArrayList<String>> newTriples = new ArrayList();
-        
-        // триплеты для удаления
-        ArrayList<ArrayList<String>> removeTriples = new ArrayList();
-        
-        // 1. проверяем, новый ли индивид. Если новый, то у него нет триплетов с сиба
-        if (getInTriples(RDF_TYPE_URI).isEmpty()) {
-            // Добавляем триплет для класса индивида
-            newTriples.add(createTriple(getID(), RDF_TYPE_URI, getURI()));
-        }
+                // триплеты для добавления
+                ArrayList<ArrayList<String>> newTriples = new ArrayList();
 
-        $PROPERTIES_UPDATE$
+                // триплеты для удаления
+                ArrayList<ArrayList<String>> removeTriples = new ArrayList();
 
-        SIBResponse ret;
-        ret = SIBFactory.getInstance().getAccessPoint(_accessPointName).insert(newTriples);
-        if (!ret.isConfirmed()) {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
-        
-        ret = SIBFactory.getInstance().getAccessPoint(_accessPointName).remove(removeTriples);
-        if (!ret.isConfirmed()) {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
+                // 1. проверяем, новый ли индивид. Если новый, то у него нет триплетов с сиба
+                if (getInTriples(RDF_TYPE_URI).isEmpty()) {
+                    // Добавляем триплет для класса индивида
+                    newTriples.add(createTriple(getID(), RDF_TYPE_URI, getURI()));
+                }
+
+                $PROPERTIES_UPDATE$
+
+                SIBFactory.getInstance().getAccessPoint(_accessPointName).insert(newTriples).addListener(new TaskListener() {
+                    @Override
+                    public void onSuccess(SIBResponse response) {
+                        if (!response.isConfirmed()) {
+                            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                        }
+
+                        SIBFactory.getInstance().getAccessPoint(_accessPointName).remove(removeTriples).addListener(new TaskListener() {
+                            @Override
+                            public void onSuccess(SIBResponse response) {
+                                if (!response.isConfirmed()) {
+                                    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                                }
+                                task.setSuccess(response);
+                            }
+
+                            @Override
+                            public void onError(Exception ex) {
+                                task.setError(ex);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(Exception ex) {
+                        task.setError(ex);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(Exception ex) {
+                task.setError(ex);
+            }
+        });
+
+        return task;
     }
 
     @Override

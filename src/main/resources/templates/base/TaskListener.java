@@ -4,5 +4,7 @@ import sofia_kp.SIBResponse;
 
 public interface TaskListener {
     void onSuccess(SIBResponse response);
-    void onError(Throwable ex);
+    default void onError(Exception ex) {
+        ex.printStackTrace();
+    }
 }

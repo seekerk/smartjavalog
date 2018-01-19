@@ -3,6 +3,7 @@ package $PACKAGE_NAME$.base;
 import android.os.AsyncTask;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import sofia_kp.KPICore;
 import sofia_kp.SIBResponse;
@@ -37,10 +38,25 @@ public abstract class BaseRDF {
      */
     public abstract String getURI();
 
-    public void load() {
-        LoadTask task = new LoadTask(this);
+    public abstract InteractionSIBTask update();
 
-        task.execute();
+    public InteractionSIBTask load() {
+        InteractionSIBTask task = new InteractionSIBTask();
+        SIBFactory.getInstance().getAccessPoint(_accessPointName).queryRDF(_id, SIB_ANY, SIB_ANY, "uri", "uri").addListener(new TaskListener() {
+            @Override
+            public void onSuccess(SIBResponse response) {
+                triples.clear();
+                triples.addAll(response.query_results);
+                task.setSuccess(response);
+            }
+
+            @Override
+            public void onError(Exception ex) {
+                task.setError(ex);
+            }
+        });
+
+        return task;
     }
 
     public ArrayList<String> getInTriples(String searchURI) {
@@ -99,30 +115,45 @@ public abstract class BaseRDF {
             return ret;
     }
 
-    private static class LoadTask extends AsyncTask<Void, Void, Void> {
-        private BaseRDF base;
+    public static class InteractionSIBTask {
 
-        public LoadTask(BaseRDF base) {
-            this.base = base;
+        protected Exception ex = null;
+
+        protected SIBResponse response = null;
+
+        protected List<TaskListener> listeners = new ArrayList<>();
+
+        public void addListener(TaskListener taskListener) {
+            listeners.add(taskListener);
+
+            if (ex != null)
+                taskListener.onError(ex);
+
+            if (response != null)
+                taskListener.onSuccess(response);
         }
 
-        @Override
-        protected Void doInBackground(Void... voids) {
-            SIBResponse resp;
-            resp = SIBFactory.getInstance().getAccessPoint(base._accessPointName).
-                    queryRDF(base._id, SIB_ANY, SIB_ANY, "uri", "uri");
-            if (!resp.isConfirmed()) {
-                //TODO: change to exception
-                System.err.println("Failed connection");
-                return null;
+        public void setError(Exception ex) {
+            this.ex = ex;
+            onPostExecute();
+        }
+
+        public void setSuccess(SIBResponse response) {
+            this.response = response;
+            this.ex = null;
+            onPostExecute();
+        }
+
+        protected void onPostExecute() {
+            if (ex != null) {
+                for (TaskListener listener : listeners) {
+                    listener.onError(ex);
+                }
+                return;
             }
-            base.triples.clear();
-            base.triples.addAll(resp.query_results);
-            //TODO: DEBUG
-            for (ArrayList<String> t : base.triples) {
-                System.out.println(t);
+            for (TaskListener listener : listeners) {
+                listener.onSuccess(response);
             }
-            return null;
         }
     }
 }

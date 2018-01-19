@@ -42,6 +42,11 @@ public abstract class SIBAsyncTask {
 
     protected abstract void doInBackground();
 
+    public void setError(Exception ex) {
+        this.ex = ex;
+        onPostExecute();
+    }
+
     protected void onPostExecute() {
         if (ex != null) {
             for (TaskListener listener : listeners) {

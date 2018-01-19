@@ -6,6 +6,7 @@ import android.util.Log;
 import sofia_kp.KPICore;
 import sofia_kp.SIBResponse;
 
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,11 +28,15 @@ public class KPIproxy {
         core.PORT = port;
     }
 
-    SIBResponse queryRDF(String subject, String predicate, String object, String subjectType, String objectType) {
-        if (!isConnected)
-            connect();
-
-        return core.queryRDF(subject, predicate, object, subjectType, objectType);
+    QueryRDFTask queryRDF(String subject, String predicate, String object, String subjectType, String objectType) {
+        QueryRDFTask task = new QueryRDFTask(this);
+        task.setQuery(subject, predicate, object, subjectType, objectType);
+        if (!isConnected) {
+            task.setError(new IllegalStateException("Not connected to SIB"));
+        } else {
+            task.execute();
+        }
+        return task;
     }
 
     public void disconnect() {
@@ -45,18 +50,101 @@ public class KPIproxy {
         return task;
     }
 
-    public SIBResponse insert(ArrayList<ArrayList<String>> newTriples) {
+    public InsertTask insert(final ArrayList<ArrayList<String>> newTriples) {
+        final InsertTask task = new InsertTask(this);
         if (!isConnected)
-            connect();
+            task.setError(new IllegalStateException("Not connected to SIB"));
+        else {
+            task.setTriples(newTriples);
+            task.execute();
+        }
 
-        return core.insert(newTriples);
+        return task;
     }
 
-    public SIBResponse remove(ArrayList<ArrayList<String>> removeTriples) {
+    public RemoveTask remove(final ArrayList<ArrayList<String>> removeTriples) {
+        final RemoveTask task = new RemoveTask(this);
         if (!isConnected)
-            connect();
+            task.setError(new IllegalStateException("Not connected to SIB"));
+        else {
+            task.setTriples(removeTriples);
+            task.execute();
+        }
 
-        return core.remove(removeTriples);
+        return task;
+    }
+
+    public static class QueryRDFTask extends SIBAsyncTask {
+
+        private String subject;
+        private String predicate;
+        private String object;
+        private String subjectType;
+        private String objectType;
+
+        public QueryRDFTask(KPIproxy proxy) {
+            super(proxy);
+        }
+
+        @Override
+        protected void doInBackground() {
+            this.response = proxy.core.queryRDF(subject, predicate, object, subjectType, objectType);
+            Log.d(TAG, "Query result: " + response);
+        }
+
+        public void setQuery(String subject, String predicate, String object, String subjectType, String objectType) {
+            this.subject = subject;
+            this.predicate = predicate;
+            this.object = object;
+            this.subjectType = subjectType;
+            this.objectType = objectType;
+        }
+    }
+
+    public static class InsertTask extends SIBAsyncTask {
+        private ArrayList<ArrayList<String>> triples;
+
+
+        public InsertTask(KPIproxy proxy) {
+            super(proxy);
+        }
+
+        @Override
+        protected void doInBackground() {
+            if (triples == null) {
+                ex = new IllegalArgumentException("Triples not defined");
+                return;
+            }
+            response = proxy.core.insert(triples);
+            Log.d(TAG, "Insert results: " + response);
+        }
+
+        public void setTriples(ArrayList<ArrayList<String>> triples) {
+            this.triples = triples;
+        }
+    }
+
+    public static class RemoveTask extends SIBAsyncTask {
+        private ArrayList<ArrayList<String>> triples;
+
+
+        public RemoveTask(KPIproxy proxy) {
+            super(proxy);
+        }
+
+        @Override
+        protected void doInBackground() {
+            if (triples == null) {
+                ex = new IllegalArgumentException("Triples not defined");
+                return;
+            }
+            response = proxy.core.remove(triples);
+            Log.d(TAG, "Remove result: " + response);
+        }
+
+        public void setTriples(ArrayList<ArrayList<String>> triples) {
+            this.triples = triples;
+        }
     }
 
     /**
@@ -98,8 +186,10 @@ public class KPIproxy {
             }
             //TODO: проверить корректность подключения
             Log.d(TAG, "Joint result: " + this.response);
-            proxy.isConnected = true;
-            return;
+            if (response != null)
+                proxy.isConnected = true;
+            else
+                ex = new ConnectException("Can't connect to SIB");
         }
     }
 }
