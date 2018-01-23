@@ -8,6 +8,8 @@ import java.util.Random;
 import sofia_kp.KPICore;
 import sofia_kp.SIBResponse;
 
+import static org.fruct.oss.smartjavalog.base.KPIproxy.SIB_ANY;
+
 public abstract class BaseRDF {
 
     protected String _accessPointName;
@@ -17,11 +19,6 @@ public abstract class BaseRDF {
 
     // загруженные триплеты
     private final ArrayList<ArrayList<String>> triples = new ArrayList<>();
-
-    // разные гадости
-    //TODO: заменить на rdg4j
-    public static final String RDF_TYPE_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-    public static final String SIB_ANY = "http://www.nokia.com/NRC/M3/sib#any";
 
     public BaseRDF(String objectID, String accessPointName) {
         _accessPointName = accessPointName;

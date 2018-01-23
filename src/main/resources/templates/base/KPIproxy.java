@@ -5,6 +5,7 @@ import android.util.Log;
 
 import sofia_kp.KPICore;
 import sofia_kp.SIBResponse;
+import sofia_kp.iKPIC_subscribeHandler2;
 
 import java.net.ConnectException;
 import java.util.ArrayList;
@@ -12,6 +13,11 @@ import java.util.List;
 
 public class KPIproxy {
     private static String TAG = "KPIproxy";
+
+    // разные гадости
+    //TODO: заменить на rdg4j
+    public static final String RDF_TYPE_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+    public static final String SIB_ANY = "http://www.nokia.com/NRC/M3/sib#any";
 
     private KPICore core;
     private boolean isConnected = false;
@@ -93,19 +99,31 @@ public class KPIproxy {
         return task;
     }
 
-    public static class SubscribeTask extends SIBAsyncTask {
+    public static class SubscribeTask extends SIBSubscribeTask {
         private String classURI = null;
+
+        private iKPIC_subscribeHandler2 handler = null;
         public SubscribeTask(KPIproxy kpIproxy) { super(kpIproxy);}
 
-        public void setClassURI(String classURI) { this.classURI = classURI; }
+        public void setClassUri(String classURI) { this.classURI = classURI; }
 
         @Override
         protected void doInBackground() {
-            this.response = proxy.core.subscribe();
+            if (handler == null) {
+                this.ex = new IllegalStateException("Subscription handler not defined");
+                return;
+            }
+
+            String query = "select ?subject ?predicate ?object where {?subject ?predicate ?object}";
+            if (classURI != null && !classURI.isEmpty()) {
+                query = "select ?subject ?predicate ?object where {?subject ?predicate ?object . ?subject <" + RDF_TYPE_URI + "> <" + classURI + ">}";
+            }
+            this.response = proxy.core.subscribeSPARQL(query, handler);
+            Log.d(TAG, "Subscribe result:" + response);
         }
     }
 
-    public static class QueryRDFTask extends SIBAsyncTask {
+    public static class QueryRDFTask extends SIBQueryTask {
 
         private String subject;
         private String predicate;
@@ -132,7 +150,7 @@ public class KPIproxy {
         }
     }
 
-    public static class InsertTask extends SIBAsyncTask {
+    public static class InsertTask extends SIBQueryTask {
         private ArrayList<ArrayList<String>> triples;
 
 
@@ -155,7 +173,7 @@ public class KPIproxy {
         }
     }
 
-    public static class RemoveTask extends SIBAsyncTask {
+    public static class RemoveTask extends SIBQueryTask {
         private ArrayList<ArrayList<String>> triples;
 
 
@@ -181,7 +199,7 @@ public class KPIproxy {
     /**
      * Async leave
      */
-    public static class LeaveTask extends SIBAsyncTask {
+    public static class LeaveTask extends SIBQueryTask {
 
         LeaveTask(KPIproxy proxy) {
             super(proxy);
@@ -201,7 +219,7 @@ public class KPIproxy {
         }
     }
 
-    public static class JoinTask extends SIBAsyncTask {
+    public static class JoinTask extends SIBQueryTask {
 
         JoinTask(KPIproxy proxy) {
             super(proxy);

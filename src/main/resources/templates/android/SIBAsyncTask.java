@@ -19,58 +19,43 @@ public abstract class SIBAsyncTask {
 
     protected SIBResponse response = null;
 
-    protected List<TaskListener> listeners = new ArrayList<>();
-
     public SIBAsyncTask(KPIproxy proxy) {
         this.proxy = proxy;
     }
 
-    public void addListener(TaskListener taskListener) {
-        listeners.add(taskListener);
-
-        if (ex != null)
-            taskListener.onError(ex);
-
-        if (response != null)
-            taskListener.onSuccess(response);
-    }
-
     public void execute() {
-        NativeAsyncTask task = new NativeAsyncTask();
+        NativeAsyncTask task = new NativeAsyncTask(this);
         task.execute();
     }
 
     protected abstract void doInBackground();
+
+    protected abstract void onPostExecute();
 
     public void setError(Exception ex) {
         this.ex = ex;
         onPostExecute();
     }
 
-    protected void onPostExecute() {
-        if (ex != null) {
-            for (TaskListener listener : listeners) {
-                listener.onError(ex);
-            }
-            return;
-        }
-        for (TaskListener listener : listeners) {
-            listener.onSuccess(response);
-        }
-    }
+    /**
+     * Native implementation of required multithread model for Android through AsyncTask
+     */
+    private static class NativeAsyncTask extends AsyncTask<Void, Void, Void> {
+        SIBAsyncTask that;
 
-
-    private class NativeAsyncTask extends AsyncTask<Void, Void, Void> {
+        NativeAsyncTask(SIBAsyncTask that) {
+            this.that = that;
+        }
         @Override
         protected Void doInBackground(Void... voids) {
-            SIBAsyncTask.this.doInBackground();
+            that.doInBackground();
             return null;
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            SIBAsyncTask.this.onPostExecute();
+            that.onPostExecute();
         }
     }
 }
