@@ -1,4 +1,4 @@
-package $PACKAGE_NAME$.base;
+package org.fruct.oss.smartjavalog.base;
 
 import sofia_kp.SIBResponse;
 

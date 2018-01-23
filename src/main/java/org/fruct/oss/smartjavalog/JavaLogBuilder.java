@@ -65,6 +65,8 @@ public class JavaLogBuilder {
 
     private OWLOntology ontology = null;
 
+    private static String smartJavalogPackageName = "org.fruct.oss.smartjavalog.base";
+
     JavaLogBuilder() {
         classTemplate = loadTemplate(CLASS_TEMPLATE);
         dataPropertyTemplate = loadTemplate(DATAPROPERTY_TEMPLATE);
@@ -144,7 +146,7 @@ public class JavaLogBuilder {
             factoryContent = new ST(templateContent, '$', '$');
             factoryContent.add("PACKAGE_NAME", packageName);
 
-            saveFile(getFileName(patternFile), factoryContent.render(), "base");
+            saveFile(getFileName(patternFile), factoryContent.render(), smartJavalogPackageName);
         }
 
         // платформо-специфичные шаблоны
@@ -159,7 +161,7 @@ public class JavaLogBuilder {
             factoryContent = new ST(templateContent, '$', '$');
             factoryContent.add("PACKAGE_NAME", packageName);
 
-            saveFile(getFileName(patternFile), factoryContent.render(), "base");
+            saveFile(getFileName(patternFile), factoryContent.render(), smartJavalogPackageName);
         }
 //
 //        // baserdf.java
@@ -183,13 +185,11 @@ public class JavaLogBuilder {
     }
 
     private void saveFile(String fileName, String value) {
-        saveFile(fileName, value, null);
+        saveFile(fileName, value, this.packageName);
     }
 
-    private void saveFile(String fileName, String value, String additionalPath) {
-        String path = this.outputFolder + "/" + this.packageName.replace(".", "/");
-        if (additionalPath != null)
-            path += "/" + additionalPath;
+    private void saveFile(String fileName, String value, String packageName) {
+        String path = this.outputFolder + "/" + packageName.replace(".", "/");
 
         try {
             log.log(Level.INFO, "Create file \"" + path + "/" + fileName + "\"");
