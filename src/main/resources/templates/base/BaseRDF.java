@@ -32,12 +32,6 @@ public abstract class BaseRDF {
         return _id;
     }
 
-    /**
-     * Получение URI класса для идентификации
-     * @return URI
-     */
-    public abstract String getURI();
-
     public abstract InteractionSIBTask update();
 
     public InteractionSIBTask load() {

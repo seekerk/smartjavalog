@@ -81,6 +81,30 @@ public class KPIproxy {
         return task;
     }
 
+    public SubscribeTask subscribe(String classURI) {
+        SubscribeTask task = new SubscribeTask(this);
+        if (!isConnected)
+            task.setError(new IllegalStateException("Not connected to SIB"));
+        else {
+            task.setClassUri(classURI);
+            task.execute();
+        }
+
+        return task;
+    }
+
+    public static class SubscribeTask extends SIBAsyncTask {
+        private String classURI = null;
+        public SubscribeTask(KPIproxy kpIproxy) { super(kpIproxy);}
+
+        public void setClassURI(String classURI) { this.classURI = classURI; }
+
+        @Override
+        protected void doInBackground() {
+            this.response = proxy.core.subscribe();
+        }
+    }
+
     public static class QueryRDFTask extends SIBAsyncTask {
 
         private String subject;

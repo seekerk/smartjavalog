@@ -1,13 +1,12 @@
 package $PACKAGE_NAME$;
 
-import $PACKAGE_NAME$.base.BaseRDF;
-import $PACKAGE_NAME$.base.SIBFactory;
-import $PACKAGE_NAME$.base.TaskListener;
+import org.fruct.oss.smartjavalog.base.BaseRDF;
+import org.fruct.oss.smartjavalog.base.SIBFactory;
+import org.fruct.oss.smartjavalog.base.TaskListener;
 
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
-import sofia_kp.KPICore;
 import sofia_kp.SIBResponse;
 
 /**
@@ -38,6 +37,12 @@ public class $CLASS_NAME$ extends BaseRDF {
         super(generateID("$CLASS_NAME$"), SIBFactory.getInstance().getDefaultAccessPointName());
     }
 
+    /**
+     * Return class URI from ontology model
+     * @return String with class URI
+     */
+    public static String getClassUri() { return CLASS_URI; }
+
     $CLASS_PROPERTIES$
 
     public InteractionSIBTask update() {
@@ -56,7 +61,7 @@ public class $CLASS_NAME$ extends BaseRDF {
                 // 1. проверяем, новый ли индивид. Если новый, то у него нет триплетов с сиба
                 if (getInTriples(RDF_TYPE_URI).isEmpty()) {
                     // Добавляем триплет для класса индивида
-                    newTriples.add(createTriple(getID(), RDF_TYPE_URI, getURI()));
+                    newTriples.add(createTriple(getID(), RDF_TYPE_URI, getClassUri()));
                 }
 
                 $PROPERTIES_UPDATE$
@@ -98,11 +103,6 @@ public class $CLASS_NAME$ extends BaseRDF {
         });
 
         return task;
-    }
-
-    @Override
-    public String getURI() {
-        return CLASS_URI;
     }
 
     @Override
