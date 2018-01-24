@@ -2,12 +2,15 @@ package org.fruct.oss.smartjavalog.base;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Created by kulakov on 23.01.18.
  */
 
 public abstract class SIBQueryTask extends SIBAsyncTask {
+    private static Logger log = Logger.getLogger(SIBQueryTask.class.getName());
+
     protected List<TaskListener> listeners = new ArrayList<>();
 
     public SIBQueryTask(KPIproxy proxy) {
@@ -31,8 +34,11 @@ public abstract class SIBQueryTask extends SIBAsyncTask {
             }
             return;
         }
-        for (TaskListener listener : listeners) {
-            listener.onSuccess(response);
+        if (response != null) {
+            log.info("Send success message! " + response.Status);
+            for (TaskListener listener : listeners) {
+                listener.onSuccess(response);
+            }
         }
     }
 

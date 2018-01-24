@@ -1,12 +1,10 @@
 package org.fruct.oss.smartjavalog.base;
 
-import android.os.AsyncTask;
+import sofia_kp.SIBResponse;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import sofia_kp.KPICore;
-import sofia_kp.SIBResponse;
 
 import static org.fruct.oss.smartjavalog.base.KPIproxy.SIB_ANY;
 

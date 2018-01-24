@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import sofia_kp.SIBResponse;
 
+import static org.fruct.oss.smartjavalog.base.KPIproxy.RDF_TYPE_URI;
+
 /**
 $CLASS_DESCRIPTION$
  */

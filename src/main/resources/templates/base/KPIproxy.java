@@ -1,18 +1,15 @@
 package org.fruct.oss.smartjavalog.base;
 
-import android.os.AsyncTask;
-import android.util.Log;
-
 import sofia_kp.KPICore;
-import sofia_kp.SIBResponse;
+import sofia_kp.SSAP_sparql_response;
 import sofia_kp.iKPIC_subscribeHandler2;
 
 import java.net.ConnectException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.logging.Logger;
 
 public class KPIproxy {
-    private static String TAG = "KPIproxy";
+    private static Logger log = Logger.getLogger(KPIproxy.class.getName());
 
     // разные гадости
     //TODO: заменить на rdg4j
@@ -32,6 +29,10 @@ public class KPIproxy {
 
         core.HOST = host;
         core.PORT = port;
+    }
+
+    public KPICore getCore() {
+        return core;
     }
 
     QueryRDFTask queryRDF(String subject, String predicate, String object, String subjectType, String objectType) {
@@ -99,27 +100,43 @@ public class KPIproxy {
         return task;
     }
 
-    public static class SubscribeTask extends SIBSubscribeTask {
+    public static class SubscribeTask extends SIBSubscribeTask implements iKPIC_subscribeHandler2 {
         private String classURI = null;
 
-        private iKPIC_subscribeHandler2 handler = null;
-        public SubscribeTask(KPIproxy kpIproxy) { super(kpIproxy);}
+        SubscribeTask(KPIproxy kpIproxy) { super(kpIproxy);}
 
-        public void setClassUri(String classURI) { this.classURI = classURI; }
+        void setClassUri(String classURI) { this.classURI = classURI; }
 
         @Override
         protected void doInBackground() {
-            if (handler == null) {
-                this.ex = new IllegalStateException("Subscription handler not defined");
-                return;
-            }
-
             String query = "select ?subject ?predicate ?object where {?subject ?predicate ?object}";
             if (classURI != null && !classURI.isEmpty()) {
                 query = "select ?subject ?predicate ?object where {?subject ?predicate ?object . ?subject <" + RDF_TYPE_URI + "> <" + classURI + ">}";
             }
-            this.response = proxy.core.subscribeSPARQL(query, handler);
-            Log.d(TAG, "Subscribe result:" + response);
+            this.response = proxy.core.subscribeSPARQL(query, this);
+            log.info("Subscribe result:" + response);
+        }
+
+        @Override
+        public void kpic_RDFEventHandler(ArrayList<ArrayList<String>> newTriples, ArrayList<ArrayList<String>> oldTriples, String indSequence, String subID) {
+            log.info("Handle RDF event " + indSequence + " (" + subID +  "): new=" + newTriples + "; old=" + oldTriples);
+        }
+
+        @Override
+        public void kpic_SPARQLEventHandler(SSAP_sparql_response newResults, SSAP_sparql_response oldResults, String indSequence, String subID) {
+            log.info("Handle SPARQL event " + indSequence + " (" + subID +  "): new=" + newResults + "; old=" + oldResults);
+        }
+
+        @Override
+        public void kpic_UnsubscribeEventHandler(String sub_ID) {
+            log.info("Handle unsubscribe id=" + sub_ID);
+        }
+
+        @Override
+        public void kpic_ExceptionEventHandler(Throwable SocketException) {
+            log.info("Handle exception");
+            ex = new Exception(SocketException);
+            onPostExecute();
         }
     }
 
@@ -131,17 +148,17 @@ public class KPIproxy {
         private String subjectType;
         private String objectType;
 
-        public QueryRDFTask(KPIproxy proxy) {
+        QueryRDFTask(KPIproxy proxy) {
             super(proxy);
         }
 
         @Override
         protected void doInBackground() {
             this.response = proxy.core.queryRDF(subject, predicate, object, subjectType, objectType);
-            Log.d(TAG, "Query result: " + response);
+            log.info("Query result: " + response);
         }
 
-        public void setQuery(String subject, String predicate, String object, String subjectType, String objectType) {
+        void setQuery(String subject, String predicate, String object, String subjectType, String objectType) {
             this.subject = subject;
             this.predicate = predicate;
             this.object = object;
@@ -154,7 +171,7 @@ public class KPIproxy {
         private ArrayList<ArrayList<String>> triples;
 
 
-        public InsertTask(KPIproxy proxy) {
+        InsertTask(KPIproxy proxy) {
             super(proxy);
         }
 
@@ -165,10 +182,10 @@ public class KPIproxy {
                 return;
             }
             response = proxy.core.insert(triples);
-            Log.d(TAG, "Insert results: " + response);
+            log.info("Insert results: " + response);
         }
 
-        public void setTriples(ArrayList<ArrayList<String>> triples) {
+        void setTriples(ArrayList<ArrayList<String>> triples) {
             this.triples = triples;
         }
     }
@@ -177,7 +194,7 @@ public class KPIproxy {
         private ArrayList<ArrayList<String>> triples;
 
 
-        public RemoveTask(KPIproxy proxy) {
+        RemoveTask(KPIproxy proxy) {
             super(proxy);
         }
 
@@ -188,10 +205,10 @@ public class KPIproxy {
                 return;
             }
             response = proxy.core.remove(triples);
-            Log.d(TAG, "Remove result: " + response);
+            log.info("Remove result: " + response);
         }
 
-        public void setTriples(ArrayList<ArrayList<String>> triples) {
+        void setTriples(ArrayList<ArrayList<String>> triples) {
             this.triples = triples;
         }
     }
@@ -211,10 +228,10 @@ public class KPIproxy {
                 this.response = proxy.core.leave();
             } catch (SecurityException ex) {
                 this.ex = ex;
-                Log.w(TAG, ex);
+                log.info(ex.toString());
             }
             //TODO: проверить корректность подключения
-            Log.d(TAG, "Leave result: " + this.response);
+            log.info("Leave result: " + this.response);
             proxy.isConnected = false;
         }
     }
@@ -233,12 +250,13 @@ public class KPIproxy {
                 this.ex = ex;
                 return;
             }
-            //TODO: проверить корректность подключения
-            Log.d(TAG, "Joint result: " + this.response);
-            if (response != null)
+            log.info( "Joint result: " + this.response);
+            if (response.isConfirmed())
                 proxy.isConnected = true;
-            else
-                ex = new ConnectException("Can't connect to SIB");
+            else {
+                this.response = null;
+                this.ex = new ConnectException("Can't connect to SIB");
+            }
         }
     }
 }

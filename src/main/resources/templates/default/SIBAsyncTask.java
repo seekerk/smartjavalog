@@ -14,38 +14,21 @@ public abstract class SIBAsyncTask {
 
     protected SIBResponse response = null;
 
-    protected List<TaskListener> listeners = new ArrayList<>();
-
     public SIBAsyncTask(KPIproxy proxy) {
         this.proxy = proxy;
     }
 
-    public void addListener(TaskListener taskListener) {
-        listeners.add(taskListener);
-
-        if (ex != null)
-            taskListener.onError(ex);
-
-        if (response != null)
-            taskListener.onSuccess(response);
-    }
-
     public void execute() {
         doInBackground();
-        postExecute();
+        onPostExecute();
     }
 
     protected abstract void doInBackground();
 
-    protected void postExecute() {
-        if (ex != null) {
-            for (TaskListener listener : listeners) {
-                listener.onError(ex);
-            }
-            return;
-        }
-        for (TaskListener listener : listeners) {
-            listener.onSuccess(response);
-        }
+    protected abstract void onPostExecute();
+
+    public void setError(Exception ex) {
+        this.ex = ex;
+        onPostExecute();
     }
 }
