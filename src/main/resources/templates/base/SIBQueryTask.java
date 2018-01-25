@@ -20,8 +20,10 @@ public abstract class SIBQueryTask extends SIBAsyncTask {
     public void addListener(TaskListener taskListener) {
         listeners.add(taskListener);
 
-        if (ex != null)
+        if (ex != null) {
             taskListener.onError(ex);
+            return;
+        }
 
         if (response != null)
             taskListener.onSuccess(response);

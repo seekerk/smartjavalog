@@ -1,6 +1,7 @@
 package org.fruct.oss.smartjavalog.base;
 
 import sofia_kp.KPICore;
+import sofia_kp.SIBResponse;
 import sofia_kp.SSAP_sparql_response;
 import sofia_kp.iKPIC_subscribeHandler2;
 
@@ -52,7 +53,18 @@ public class KPIproxy {
 
     public LeaveTask disconnect() {
         LeaveTask task = new LeaveTask(this);
-        task.execute();
+        SubscribeQuery.getInstance().unsubscribe().addListener(new TaskListener() {
+            @Override
+            public void onSuccess(SIBResponse response) {
+                task.execute();
+            }
+
+            @Override
+            public void onError(Exception ex) {
+                task.setError(ex);
+                task.execute();
+            }
+        });
 
         return task;
     }
@@ -60,6 +72,24 @@ public class KPIproxy {
     public JoinTask connect() {
         JoinTask task = new JoinTask(this);
         task.execute();
+        // after connection start subscription
+        task.addListener(new TaskListener() {
+            @Override
+            public void onSuccess(SIBResponse response) {
+                SubscribeQuery.getInstance().subscribe().addListener(new TaskListener() {
+                    @Override
+                    public void onSuccess(SIBResponse response) {
+                        log.info("Subscription connected");
+                    }
+
+                    @Override
+                    public void onError(Exception ex) {
+                        task.setError(ex);
+                    }
+                });
+
+            }
+        });
 
         return task;
     }
@@ -86,58 +116,6 @@ public class KPIproxy {
         }
 
         return task;
-    }
-
-    public SubscribeTask subscribe(String classURI) {
-        SubscribeTask task = new SubscribeTask(this);
-        if (!isConnected)
-            task.setError(new IllegalStateException("Not connected to SIB"));
-        else {
-            task.setClassUri(classURI);
-            task.execute();
-        }
-
-        return task;
-    }
-
-    public static class SubscribeTask extends SIBSubscribeTask implements iKPIC_subscribeHandler2 {
-        private String classURI = null;
-
-        SubscribeTask(KPIproxy kpIproxy) { super(kpIproxy);}
-
-        void setClassUri(String classURI) { this.classURI = classURI; }
-
-        @Override
-        protected void doInBackground() {
-            String query = "select ?subject ?predicate ?object where {?subject ?predicate ?object}";
-            if (classURI != null && !classURI.isEmpty()) {
-                query = "select ?subject ?predicate ?object where {?subject ?predicate ?object . ?subject <" + RDF_TYPE_URI + "> <" + classURI + ">}";
-            }
-            this.response = proxy.core.subscribeSPARQL(query, this);
-            log.info("Subscribe result:" + response);
-        }
-
-        @Override
-        public void kpic_RDFEventHandler(ArrayList<ArrayList<String>> newTriples, ArrayList<ArrayList<String>> oldTriples, String indSequence, String subID) {
-            log.info("Handle RDF event " + indSequence + " (" + subID +  "): new=" + newTriples + "; old=" + oldTriples);
-        }
-
-        @Override
-        public void kpic_SPARQLEventHandler(SSAP_sparql_response newResults, SSAP_sparql_response oldResults, String indSequence, String subID) {
-            log.info("Handle SPARQL event " + indSequence + " (" + subID +  "): new=" + newResults + "; old=" + oldResults);
-        }
-
-        @Override
-        public void kpic_UnsubscribeEventHandler(String sub_ID) {
-            log.info("Handle unsubscribe id=" + sub_ID);
-        }
-
-        @Override
-        public void kpic_ExceptionEventHandler(Throwable SocketException) {
-            log.info("Handle exception");
-            ex = new Exception(SocketException);
-            onPostExecute();
-        }
     }
 
     public static class QueryRDFTask extends SIBQueryTask {

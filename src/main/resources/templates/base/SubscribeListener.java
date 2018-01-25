@@ -12,12 +12,6 @@ public interface SubscribeListener {
     void addItem(BaseRDF item);
 
     /**
-     * Notification of an individe change in smart space
-     * @param item changed individe
-     */
-    void updateItem(BaseRDF item);
-
-    /**
      * Notification of an individe remove in smart space
      * @param item removed individe
      */
