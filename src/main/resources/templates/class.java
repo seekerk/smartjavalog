@@ -2,6 +2,7 @@ package $PACKAGE_NAME$;
 
 import org.fruct.oss.smartjavalog.base.BaseRDF;
 import org.fruct.oss.smartjavalog.base.SIBFactory;
+import org.fruct.oss.smartjavalog.base.SubscribeQuery;
 import org.fruct.oss.smartjavalog.base.TaskListener;
 
 import java.util.List;
@@ -17,6 +18,42 @@ $CLASS_DESCRIPTION$
 public class $CLASS_NAME$ extends BaseRDF {
 
     private static final String CLASS_URI = "$CLASS_URI$";
+
+    private static boolean classLoader = classLoader();
+
+    private static boolean classLoader() {
+        BaseRDF.registerInstance(CLASS_URI, new BaseRDFChildInstance() {
+            @Override
+            public BaseRDF getInstance(String objectId) {
+                return $CLASS_NAME$.getInstance(objectId, SIBFactory.getInstance().getDefaultAccessPointName());
+            }
+
+            @Override
+            public BaseRDF getInstance() {
+                return $CLASS_NAME$.getInstance();
+            }
+        });
+
+        return true;
+    }
+
+    public static $CLASS_NAME$ getInstance(String objectId, String accessPointName) {
+        $CLASS_NAME$ ret = ($CLASS_NAME$) SubscribeQuery.getInstance().getKnownObject(objectId);
+
+        if (ret == null) {
+            ret = new $CLASS_NAME$(objectId, accessPointName);
+            SubscribeQuery.getInstance().registerObject(ret);
+        }
+
+        return ret;
+    }
+
+    public static $CLASS_NAME$ getInstance() {
+        $CLASS_NAME$ ret = new $CLASS_NAME$();
+        SubscribeQuery.getInstance().registerObject(ret);
+
+        return ret;
+    }
 
     /**
      * Creates new class entity

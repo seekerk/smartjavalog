@@ -134,6 +134,8 @@ public class KPIproxy {
         protected void doInBackground() {
             this.response = proxy.core.queryRDF(subject, predicate, object, subjectType, objectType);
             log.info("Query result: " + response);
+            if (!this.response.isConfirmed())
+                this.ex = new Exception("Query error: " + proxy.core.getErrMess());
         }
 
         void setQuery(String subject, String predicate, String object, String subjectType, String objectType) {
@@ -160,6 +162,8 @@ public class KPIproxy {
                 return;
             }
             response = proxy.core.insert(triples);
+            if (!response.isConfirmed())
+                this.ex = new Exception("Insert error: " + proxy.core.getErrMess());
             log.info("Insert results: " + response);
         }
 
@@ -183,6 +187,8 @@ public class KPIproxy {
                 return;
             }
             response = proxy.core.remove(triples);
+            if (!response.isConfirmed())
+                ex = new Exception("Remove error: " + proxy.core.getErrMess());
             log.info("Remove result: " + response);
         }
 
@@ -232,8 +238,7 @@ public class KPIproxy {
             if (response.isConfirmed())
                 proxy.isConnected = true;
             else {
-                this.response = null;
-                this.ex = new ConnectException("Can't connect to SIB");
+                this.ex = new ConnectException("Can't connect to SIB: " + proxy.core.getErrMess());
             }
         }
     }
