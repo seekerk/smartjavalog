@@ -13,6 +13,12 @@ public abstract class BaseRDF {
     // датчик случайных чисел для генератора
     private static Random rand = null;
 
+    private InteractionSIBTask loadTask = null;
+
+    private boolean isDownloaded = false;
+
+    private List<UpdateListener> listeners = new ArrayList<>();
+
     // загруженные триплеты
     private final ArrayList<ArrayList<String>> triples = new ArrayList<>();
 
@@ -28,6 +34,25 @@ public abstract class BaseRDF {
         return registeredInstances.get(classUri).getInstance();
     }
 
+    public void addListener(UpdateListener listener) {
+        this.listeners.add(listener);
+        if (isDownloaded)
+            listener.onUpdate();
+    }
+
+    public boolean removeListener(UpdateListener listener) {
+        return this.listeners.remove(listener);
+    }
+
+    protected void notifyListeners(Exception ex) {
+        for (UpdateListener listener : listeners) {
+            if (ex != null)
+                listener.onError(ex);
+            else
+                listener.onUpdate();
+        }
+    }
+
     protected BaseRDF(String objectID, String accessPointName) {
         _accessPointName = accessPointName;
         _id = objectID;
@@ -39,29 +64,37 @@ public abstract class BaseRDF {
 
     public abstract InteractionSIBTask update();
 
-    public InteractionSIBTask load() {
-        InteractionSIBTask task = new InteractionSIBTask();
+    public InteractionSIBTask download() {
+        if (loadTask != null)
+            return loadTask;
+
+        loadTask = new InteractionSIBTask();
         SIBFactory.getInstance().getAccessPoint(_accessPointName).queryRDF(_id, SIB_ANY, SIB_ANY, "uri", "uri").addListener(new TaskListener() {
             @Override
             public void onSuccess(SIBResponse response) {
                 triples.clear();
                 triples.addAll(response.query_results);
-                task.setSuccess(response);
+                loadTask.setSuccess(response);
+                BaseRDF.this.loadTask = null;
+                isDownloaded = true;
+                notifyListeners(null);
             }
 
             @Override
             public void onError(Exception ex) {
-                task.setError(ex);
+                loadTask.setError(ex);
+                BaseRDF.this.loadTask = null;
+                notifyListeners(ex);
             }
         });
 
-        return task;
+        return loadTask;
     }
 
     public ArrayList<String> getInTriples(String searchURI) {
         ArrayList<String> ret = new ArrayList<>();
         if (this.triples.size() == 0) {
-            load();
+            download();
         }
         for (ArrayList<String> t : this.triples) {
             if (t.contains(searchURI)) {
@@ -73,14 +106,14 @@ public abstract class BaseRDF {
 
     void addTriple(List<String> triple) {
         this.triples.add(new ArrayList<>(triple));
-        //TODO: notify object listeners
+        notifyListeners(null);
     }
 
     void removeTriple(List<String> triple) {
         for (ArrayList<String> oldTriple : this.triples) {
             if (oldTriple.containsAll(triple)) {
                 this.triples.remove(oldTriple);
-                //TODO: notify object listeners
+                notifyListeners(null);
                 return;
             }
         }
@@ -127,6 +160,10 @@ public abstract class BaseRDF {
             ret.add(objectType);
             ret.add(subjectType);
             return ret;
+    }
+
+    public boolean isDownloaded() {
+        return isDownloaded;
     }
 
     public static class InteractionSIBTask {

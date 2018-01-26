@@ -7,6 +7,7 @@ import sofia_kp.iKPIC_subscribeHandler2;
 
 import java.net.ConnectException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class KPIproxy {
@@ -34,17 +35,6 @@ public class KPIproxy {
 
     public KPICore getCore() {
         return core;
-    }
-
-    QueryRDFTask queryRDF(String subject, String predicate, String object, String subjectType, String objectType) {
-        QueryRDFTask task = new QueryRDFTask(this);
-        task.setQuery(subject, predicate, object, subjectType, objectType);
-        if (!isConnected) {
-            task.setError(new IllegalStateException("Not connected to SIB"));
-        } else {
-            task.execute();
-        }
-        return task;
     }
 
     public boolean isConnected() {
@@ -118,6 +108,108 @@ public class KPIproxy {
         return task;
     }
 
+    QueryRDFTask queryRDF(String subject, String predicate, String object, String subjectType, String objectType) {
+        QueryRDFTask task = new QueryRDFTask(this);
+        task.setQuery(subject, predicate, object, subjectType, objectType);
+        if (!isConnected) {
+            task.setError(new IllegalStateException("Not connected to SIB"));
+        } else {
+            task.execute();
+        }
+        return task;
+    }
+
+    /**
+     * Load all known instances of selected class from SIB
+     * @param classURI class URI
+     * @return Async task with executed query
+     */
+    public QueryClassTask queryClass(String classURI) {
+        QueryClassTask task = new QueryClassTask(this);
+        task.setClassURI(classURI);
+        if (!isConnected)
+            task.setError(new IllegalStateException("Not connected to SIB"));
+        else
+            task.execute();
+        return task;
+    }
+
+    /**
+     * Async task to download all known instances of selected class
+     */
+    public static class QueryClassTask extends SIBQueryTask {
+        private String classURI;
+
+        private List<QueryListener> classListeners = new ArrayList<>();
+
+        void setClassURI(String classURI) {
+            this.classURI = classURI;
+        }
+
+        public QueryClassTask(KPIproxy proxy) {
+            super(proxy);
+        }
+
+        @Override
+        protected void doInBackground() {
+            this.response = proxy.core.queryRDF(SIB_ANY, RDF_TYPE_URI, classURI, "uri", "uri");
+            log.info("Class query result size=" + response.query_results.size());
+            if (!this.response.isConfirmed()) {
+                this.ex = new Exception("Query error: " + proxy.core.getErrMess());
+            }
+        }
+
+        @Override
+        protected void onPostExecute() {
+            super.onPostExecute();
+            if (ex != null) {
+                for (QueryListener listener: classListeners) {
+                    listener.onError(ex);
+                }
+                return;
+            }
+
+            for (ArrayList<String> triple : response.query_results) {
+                //[0] - object [id]
+                //[1] - predicate [typeof]
+                //[2] - subject [type]
+                if (!triple.get(2).equals(classURI)) {
+                    log.warning("Different types: " + classURI + " vs. " + triple.get(2));
+                    continue;
+                }
+                BaseRDF ret = BaseRDF.getInstance(triple.get(2), triple.get(0));
+
+                for (QueryListener listener : classListeners) {
+                    listener.addItem(ret);
+                }
+            }
+        }
+
+        public void addListener(QueryListener listener) {
+            classListeners.add(listener);
+            if (ex != null) {
+                listener.onError(ex);
+                return;
+            }
+            if (response != null && response.query_results.size() > 0) {
+                for (ArrayList<String> triple : response.query_results) {
+                    //[0] - object [id]
+                    //[1] - predicate [typeof]
+                    //[2] - subject [type]
+                    if (!triple.get(2).equals(classURI)) {
+                        log.warning("Different types: " + classURI + " vs. " + triple.get(2));
+                        continue;
+                    }
+                    BaseRDF ret = BaseRDF.getInstance(triple.get(2), triple.get(0));
+                    listener.addItem(ret);
+                }
+            }
+        }
+    }
+
+    /**
+     * Async task to download results of RDF query.
+     */
     public static class QueryRDFTask extends SIBQueryTask {
 
         private String subject;
@@ -133,7 +225,7 @@ public class KPIproxy {
         @Override
         protected void doInBackground() {
             this.response = proxy.core.queryRDF(subject, predicate, object, subjectType, objectType);
-            log.info("Query result: " + response);
+            log.info("Query result size=" + response.query_results.size());
             if (!this.response.isConfirmed())
                 this.ex = new Exception("Query error: " + proxy.core.getErrMess());
         }
