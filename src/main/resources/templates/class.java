@@ -60,7 +60,7 @@ public class $CLASS_NAME$ extends BaseRDF {
      * @param objectID class entity id
      * @param accessPointName the name of used access point
      */
-    public $CLASS_NAME$(String objectID, String accessPointName) {
+    protected $CLASS_NAME$(String objectID, String accessPointName) {
         super(objectID, accessPointName);
     }
 
@@ -68,11 +68,11 @@ public class $CLASS_NAME$ extends BaseRDF {
      * Creates new class entity
      * @param accessPointName  the name of used access point
      */
-    public $CLASS_NAME$(String accessPointName) {
+    protected $CLASS_NAME$(String accessPointName) {
         super(generateID("$CLASS_NAME$"), accessPointName);
     }
 
-    public $CLASS_NAME$() {
+    protected $CLASS_NAME$() {
         super(generateID("$CLASS_NAME$"), SIBFactory.getInstance().getDefaultAccessPointName());
     }
 
