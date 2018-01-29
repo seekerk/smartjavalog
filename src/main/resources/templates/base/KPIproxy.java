@@ -51,7 +51,7 @@ public class KPIproxy {
 
             @Override
             public void onError(Exception ex) {
-                task.setError(ex);
+                //task.setError(ex);
                 task.execute();
             }
         });

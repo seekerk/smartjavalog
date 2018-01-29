@@ -67,7 +67,7 @@ public abstract class BaseRDF {
     public abstract InteractionSIBTask update();
 
     public InteractionSIBTask download() {
-        if (loadTask != null)
+        if (loadTask != null && !loadTask.isDone())
             return loadTask;
 
         loadTask = new InteractionSIBTask();
@@ -77,7 +77,6 @@ public abstract class BaseRDF {
                 triples.clear();
                 triples.addAll(response.query_results);
                 loadTask.setSuccess(response);
-                BaseRDF.this.loadTask = null;
                 isDownloaded = true;
                 notifyListeners(null);
             }
@@ -85,7 +84,6 @@ public abstract class BaseRDF {
             @Override
             public void onError(Exception ex) {
                 loadTask.setError(ex);
-                BaseRDF.this.loadTask = null;
                 notifyListeners(ex);
             }
         });
@@ -177,6 +175,20 @@ public abstract class BaseRDF {
 
         protected List<TaskListener> listeners = new ArrayList<>();
 
+        private boolean isDone = false;
+
+        public boolean isDone() {
+            synchronized (this) {
+                return isDone;
+            }
+        }
+
+        private void setDone(boolean isDone) {
+            synchronized (this) {
+                this.isDone = isDone;
+            }
+        }
+
         public void addListener(TaskListener taskListener) {
             listeners.add(taskListener);
 
@@ -199,6 +211,7 @@ public abstract class BaseRDF {
         }
 
         protected void onPostExecute() {
+            setDone(true);
             if (ex != null) {
                 for (TaskListener listener : listeners) {
                     listener.onError(ex);
