@@ -15,7 +15,9 @@ public abstract class BaseRDF {
 
     private InteractionSIBTask loadTask = null;
 
-    private boolean isDownloaded = false;
+    protected boolean isDownloaded = false;
+
+    protected boolean isNew = false;
 
     private List<UpdateListener> listeners = new ArrayList<>();
 
@@ -93,7 +95,7 @@ public abstract class BaseRDF {
 
     public ArrayList<String> getInTriples(String searchURI) {
         ArrayList<String> ret = new ArrayList<>();
-        if (this.triples.size() == 0) {
+        if (this.triples.size() == 0 && !isNew) {
             download();
         }
         for (ArrayList<String> t : this.triples) {
@@ -106,6 +108,7 @@ public abstract class BaseRDF {
 
     void addTriple(List<String> triple) {
         this.triples.add(new ArrayList<>(triple));
+        isNew = false;
         notifyListeners(null);
     }
 
@@ -163,7 +166,7 @@ public abstract class BaseRDF {
     }
 
     public boolean isDownloaded() {
-        return isDownloaded;
+        return isDownloaded || isNew;
     }
 
     public static class InteractionSIBTask {

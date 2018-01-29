@@ -3,28 +3,28 @@
     private ArrayList<$PROPERTY_TYPE$> _$PROPERTY_NAME$_new = null;
     
     
-    public ArrayList<$PROPERTY_TYPE$> $PROPERTY_NAME$() {
+    public ArrayList<$PROPERTY_TYPE$> get$PROPERTY_NAME$() {
         if (_$PROPERTY_NAME$_new != null)
             return _$PROPERTY_NAME$_new;
         
         ArrayList<$PROPERTY_TYPE$> ret = new ArrayList();
         //search IDs in triples
-        ArrayList<String> $PROPERTY_NAME$IDs = getStringInTriples($PROPERTY_NAME$_URI);
+        ArrayList<String> $PROPERTY_NAME$IDs = getInTriples($PROPERTY_NAME$_URI);
         for (String locID: $PROPERTY_NAME$IDs) {
-            $PROPERTY_TYPE$ value = new $PROPERTY_TYPE$(_kp, locID);
+            $PROPERTY_TYPE$ value = $PROPERTY_TYPE$.getInstance(locID, _accessPointName);
             ret.add(value);
         }
         
         return ret;
     }
     
-    public void $PROPERTY_NAME$($PROPERTY_TYPE$ loc) {
-        $PROPERTY_NAME$(loc, true);
+    public void set$PROPERTY_NAME$($PROPERTY_TYPE$ loc) {
+        set$PROPERTY_NAME$(loc, true);
     }
     
-    public void $PROPERTY_NAME$($PROPERTY_TYPE$ value, boolean removeOldValues) {
+    public void set$PROPERTY_NAME$($PROPERTY_TYPE$ value, boolean removeOldValues) {
         if (_$PROPERTY_NAME$_new == null) {
-            _$PROPERTY_NAME$_new = $PROPERTY_NAME$();
+            _$PROPERTY_NAME$_new = get$PROPERTY_NAME$();
         }
         if (removeOldValues) {
             _$PROPERTY_NAME$_new.clear();

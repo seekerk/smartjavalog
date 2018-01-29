@@ -1,6 +1,6 @@
         if (_$PROPERTY_NAME$_new != null) {
             // получаем старые значения
-            ArrayList<String> oldValsIDs = getStringInTriples($PROPERTY_NAME$_URI);
+            ArrayList<String> oldValsIDs = getInTriples($PROPERTY_NAME$_URI);
             Iterator<$PROPERTY_TYPE$> itrNew = _$PROPERTY_NAME$_new.iterator();
             while (itrNew.hasNext()) {
                 $PROPERTY_TYPE$ curNew = itrNew.next();

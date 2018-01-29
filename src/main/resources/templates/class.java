@@ -70,10 +70,12 @@ public class $CLASS_NAME$ extends BaseRDF {
      */
     protected $CLASS_NAME$(String accessPointName) {
         super(generateID("$CLASS_NAME$"), accessPointName);
+        isNew = true;
     }
 
     protected $CLASS_NAME$() {
         super(generateID("$CLASS_NAME$"), SIBFactory.getInstance().getDefaultAccessPointName());
+        isNew = true;
     }
 
     /**
@@ -98,7 +100,7 @@ public class $CLASS_NAME$ extends BaseRDF {
                 ArrayList<ArrayList<String>> removeTriples = new ArrayList();
 
                 // 1. проверяем, новый ли индивид. Если новый, то у него нет триплетов с сиба
-                if (getInTriples(RDF_TYPE_URI).isEmpty()) {
+                if (isNew) {
                     // Добавляем триплет для класса индивида
                     newTriples.add(createTriple(getID(), RDF_TYPE_URI, getClassUri()));
                 }
@@ -119,6 +121,7 @@ public class $CLASS_NAME$ extends BaseRDF {
                                     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
                                 }
                                 task.setSuccess(response);
+                                isNew = false;
                             }
 
                             @Override

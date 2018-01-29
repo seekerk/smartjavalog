@@ -39,7 +39,7 @@ public class JavaLogBuilder {
     private static final String UPDATE_DATAPROPERTY_TEMPLATE = "templates/update-data-property.java";
     private String updateDataPropertyTemplate;
 
-    private static final String UPDATE_OBJECTPROPERTY_TEMPLATE = "templates/update-object-property.template";
+    private static final String UPDATE_OBJECTPROPERTY_TEMPLATE = "templates/update-object-property.java";
     private String updateObjectPropertyTemplate;
 
     /**

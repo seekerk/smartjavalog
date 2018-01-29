@@ -21,32 +21,11 @@
     
 
 
-    <!-- http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#hasLatitude -->
+    <!-- http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#hasPoint -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#hasLatitude">
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#Point"/>
-        <rdfs:range>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#coordinate"/>
-                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
-                <owl:onDataRange rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
-            </owl:Restriction>
-        </rdfs:range>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#hasLongitude -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#hasLongitude">
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#Point"/>
-        <rdfs:range>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#coordinate"/>
-                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
-                <owl:onDataRange rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
-            </owl:Restriction>
-        </rdfs:range>
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#hasPoint">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#Place"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#Point"/>
     </owl:ObjectProperty>
     
 
@@ -81,22 +60,6 @@
     
 
 
-    <!-- http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#name -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#name">
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#Place"/>
-        <rdfs:range>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#text"/>
-                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
-                <owl:onDataRange rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-            </owl:Restriction>
-        </rdfs:range>
-        <rdfs:comment>Place name</rdfs:comment>
-    </owl:ObjectProperty>
-    
-
-
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -108,10 +71,30 @@
     
 
 
-    <!-- http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#coordinate -->
+    <!-- http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#hasLatitude -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#coordinate">
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#hasLatitude">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#Point"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#hasLongitude -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#hasLongitude">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#Point"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#name -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#name">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#Place"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment>Determines place name</rdfs:comment>
     </owl:DatatypeProperty>
     
 
@@ -142,14 +125,6 @@
                 </owl:oneOf>
             </rdfs:Datatype>
         </rdfs:range>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#text -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/kulakov/ontologies/2018/0/untitled-ontology-2#text">
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
     </owl:DatatypeProperty>
     
 
