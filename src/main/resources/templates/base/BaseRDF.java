@@ -3,10 +3,14 @@ package org.fruct.oss.smartjavalog.base;
 import sofia_kp.SIBResponse;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 import static org.fruct.oss.smartjavalog.base.KPIproxy.SIB_ANY;
 
 public abstract class BaseRDF {
+    private static Logger log = Logger.getLogger(BaseRDF.class.getName());
+
+    protected static long NOTIFICATION_TIMEOUT = 10 * 60 * 1000L;
 
     protected String _accessPointName;
     private final String _id;
@@ -26,14 +30,26 @@ public abstract class BaseRDF {
 
     private static Map<String, BaseRDFChildInstance> registeredInstances = new HashMap<>();
 
-    public static void registerInstance(String classUri, BaseRDFChildInstance handler) {
+    private static Map<String, BaseRDFChildInstance> registeredNotifications = new HashMap<>();
+
+    public static void registerInstance(String classUri, String notificationUri, BaseRDFChildInstance handler) {
         registeredInstances.put(classUri, handler);
+        registeredNotifications.put(notificationUri, handler);
     }
 
     public static BaseRDF getInstance(String classUri, String objectId) {
         if (objectId != null)
             return registeredInstances.get(classUri).getInstance(objectId);
         return registeredInstances.get(classUri).getInstance();
+    }
+
+    public static BaseRDFChildInstance getNotificatedInstance(String notificationUri) {
+        log.info("Search uri=" + notificationUri + " in notifications");
+        if (registeredNotifications.containsKey(notificationUri)) {
+            return registeredNotifications.get(notificationUri);
+        }
+        log.info("Notification not found; known keys: " + registeredNotifications.keySet());
+        return null;
     }
 
     public void addListener(UpdateListener listener) {
@@ -66,7 +82,8 @@ public abstract class BaseRDF {
 
     public abstract InteractionSIBTask update();
 
-    public InteractionSIBTask download() {
+    public InteractionSIBTask download(boolean notifyOther) {
+        log.warning("CALL DOWNLOAD for " + getID() + " from " + Thread.currentThread().getStackTrace()[2]);
         if (loadTask != null && !loadTask.isDone())
             return loadTask;
 
@@ -78,13 +95,15 @@ public abstract class BaseRDF {
                 triples.addAll(response.query_results);
                 loadTask.setSuccess(response);
                 isDownloaded = true;
-                notifyListeners(null);
+                if (notifyOther)
+                    notifyListeners(null);
             }
 
             @Override
             public void onError(Exception ex) {
                 loadTask.setError(ex);
-                notifyListeners(ex);
+                if (notifyOther)
+                    notifyListeners(ex);
             }
         });
 
@@ -93,8 +112,9 @@ public abstract class BaseRDF {
 
     public ArrayList<String> getInTriples(String searchURI) {
         ArrayList<String> ret = new ArrayList<>();
-        if (this.triples.size() == 0 && !isNew) {
-            download();
+        if (this.triples.size() == 0 && !isNew && !isDownloaded) {
+            log.warning("CALL DOWNLOAD FOR INSTANCE " + getID() + ": isNew=" + isNew + "; isDownloaded=" + isDownloaded);
+            download(true);
         }
         for (ArrayList<String> t : this.triples) {
             if (t.contains(searchURI)) {
@@ -142,6 +162,10 @@ public abstract class BaseRDF {
      */
     public static ArrayList<String> createTriple(String object, String predicate, String subject) {
         return createTriple(object, predicate, subject, "uri", "uri");
+    }
+
+    public static ArrayList<String> createTriple(String object, String predicate, Long subject) {
+        return createTriple(object, predicate, String.valueOf(subject), "uri", "literal");
     }
 
     /**

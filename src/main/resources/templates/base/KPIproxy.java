@@ -18,6 +18,9 @@ public class KPIproxy {
     public static final String RDF_TYPE_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
     public static final String SIB_ANY = "http://www.nokia.com/NRC/M3/sib#any";
 
+    public static final String NOTIFICATION_INDIVIDE = "http://oss.fruct.org/smartjavalog#notificationIndivide";
+    public static final String NOTIFICATION_UPDATE_TIME = "http://oss.fruct.org/smartjavalog#notificationUpdateTime";
+
     private KPICore core;
     private boolean isConnected = false;
 
@@ -132,6 +135,12 @@ public class KPIproxy {
         else
             task.execute();
         return task;
+    }
+
+    public RemoveTask removeInstance(String instanceId) {
+        ArrayList<ArrayList<String>> triples = new ArrayList<>(1);
+        triples.add(BaseRDF.createTriple(instanceId, SIB_ANY, SIB_ANY));
+        return remove(triples);
     }
 
     /**

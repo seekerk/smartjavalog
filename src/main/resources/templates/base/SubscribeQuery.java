@@ -34,6 +34,8 @@ public class SubscribeQuery {
 
     private Map<String, SoftReference<BaseRDF>> knownItems = new HashMap<>();
 
+    private List<String> registeredNotifications = new ArrayList<>();
+
     private iKPIC_subscribeHandler2 handler = new iKPIC_subscribeHandler2() {
         /**
          * Process subscription event
@@ -46,11 +48,8 @@ public class SubscribeQuery {
         public void kpic_RDFEventHandler(ArrayList<ArrayList<String>> newTriples, ArrayList<ArrayList<String>> oldTriples, String indSequence, String subID) {
             log.info("kpic_RDFEventHandler(): seq=" + indSequence  + "(" + subID + ")");
             for (ArrayList<String> triple: oldTriples) {
-                log.info("Remove triple " + triple);
                 if (triple.get(1).equals(RDF_TYPE_URI)) {
                     process_remove_item(triple);
-                }else{
-                    process_remove_value(triple);
                 }
             }
 
@@ -59,11 +58,9 @@ public class SubscribeQuery {
                 //[1] - predicate (property | type)
                 //[2] - object (value | class)
                 //[3] - object type
-                log.info("Process triple " + triple);
                 if (triple.get(1).equals(RDF_TYPE_URI)) {
                     process_insert_item(triple);
                 }
-                process_insert_value(triple);
             }
 
         }
@@ -84,33 +81,61 @@ public class SubscribeQuery {
         }
     };
 
-    private void process_remove_value(ArrayList<String> triple) {
-        if (knownItems.containsKey(triple.get(0)) && knownItems.get(triple.get(0)).get() != null) {
-            BaseRDF obj = knownItems.get(triple.get(0)).get();
-            obj.removeTriple(triple);
-        }
-    }
-
-    private void process_insert_value(ArrayList<String> triple) {
-        //[0] - subject (id)
-        //[1] - predicate (property | type)
-        //[2] - object (value | class)
-        //[3] - object type
-        if (knownItems.containsKey(triple.get(0)) && knownItems.get(triple.get(0)).get() != null) {
-            BaseRDF obj = knownItems.get(triple.get(0)).get();
-            obj.addTriple(triple);
-        }
-    }
+//    private void process_remove_value(ArrayList<String> triple) {
+//        if (knownItems.containsKey(triple.get(0)) && knownItems.get(triple.get(0)).get() != null) {
+//            BaseRDF obj = knownItems.get(triple.get(0)).get();
+//            obj.removeTriple(triple);
+//        }
+//    }
+//
+//    private void process_insert_value(ArrayList<String> triple) {
+//        //[0] - subject (id)
+//        //[1] - predicate (property | type)
+//        //[2] - object (value | class)
+//        //[3] - object type
+//        if (knownItems.containsKey(triple.get(0)) && knownItems.get(triple.get(0)).get() != null) {
+//            BaseRDF obj = knownItems.get(triple.get(0)).get();
+//            obj.addTriple(triple);
+//        }
+//    }
 
     private void process_insert_item(ArrayList<String> triple) {
         log.info("process_insert_item for class: " + triple.get(2));
-        if (classSubscriptions.containsKey(triple.get(2))) {
+
+        // 1. search item in notifications
+        if (registeredNotifications.contains(triple.get(0)))
+            return;
+        final BaseRDF.BaseRDFChildInstance instance = BaseRDF.getNotificatedInstance(triple.get(2));
+        if (instance != null) {
+            log.info("Search instance for notification " + triple.get(0));
+            SIBFactory.getInstance().getAccessPoint().queryRDF(triple.get(0), "http://oss.fruct.org/smartjavalog#notificationIndivide", "http://www.nokia.com/NRC/M3/sib#any", "uri", "literal").addListener(new TaskListener(){
+                @Override
+                public void onSuccess(SIBResponse response) {
+                    for (ArrayList<String> striple : response.query_results) {
+                        if (!((String)triple.get(0)).equals(striple.get(0)) || !"http://oss.fruct.org/smartjavalog#notificationIndivide".equals(striple.get(1))) continue;
+                        log.info("Found instance " + striple.get(2) + "; notify him and exit");
+                        //instance.getInstance(striple.get(2)).notifyListeners(null);
+                        if (knownItems.containsKey(striple.get(2)) && knownItems.get(striple.get(2)).get() != null) {
+                            BaseRDF instance = knownItems.get(striple.get(2)).get();
+                            instance.notifyListeners(null);
+                        }
+                        return;
+                    }
+                }
+            });
+            return;
+        }
+
+        // 2. search in subscriptions
+        if (this.classSubscriptions.containsKey(triple.get(2))) {
             BaseRDF newItem = BaseRDF.getInstance(triple.get(2), triple.get(0));
             log.info("notify listeners: " + triple.get(0));
-            for (SubscribeListener listener : classSubscriptions.get(triple.get(2))) {
+            for (SubscribeListener listener : this.classSubscriptions.get(triple.get(2))) {
                 listener.addItem(newItem);
             }
+            return;
         }
+        log.info("Skip triple " + triple);
     }
 
     /**
@@ -158,13 +183,13 @@ public class SubscribeQuery {
             task.setError(new IllegalStateException("Not connected to SIB"));
         else {
             task.setHandler(this.handler);
-            task.execute();
             task.addListener(new TaskListener() {
                 @Override
                 public void onSuccess(SIBResponse response) {
                     subscribed = true;
                 }
             });
+            task.execute();
         }
 
         return task;
@@ -234,6 +259,14 @@ public class SubscribeQuery {
         return null;
     }
 
+    public void registerNotification(String notificationId) {
+        this.registeredNotifications.add(notificationId);
+    }
+
+    public void removeNotificationRegistration(String finalNotificationId) {
+        this.registeredNotifications.remove(finalNotificationId);
+    }
+
     public static class SubscribeTask extends SIBQueryTask {
 
         private iKPIC_subscribeHandler2 handler;
@@ -244,7 +277,8 @@ public class SubscribeQuery {
 
         @Override
         protected void doInBackground() {
-            this.response = proxy.getCore().subscribeRDF(SIB_ANY, SIB_ANY, SIB_ANY, "uri", handler);
+            //subscribe to instance definition triplets
+            this.response = proxy.getCore().subscribeRDF(SIB_ANY, RDF_TYPE_URI, SIB_ANY, "uri", handler);
             if (!this.response.isConfirmed()) {
                 this.ex = new Exception("Subscription error: " + proxy.getCore().getErrMess());
             }
