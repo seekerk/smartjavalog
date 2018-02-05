@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 import static org.fruct.oss.smartjavalog.base.KPIproxy.SIB_ANY;
 
-public abstract class BaseRDF {
+public abstract class BaseRDF implements UpdateListener {
     private static Logger log = Logger.getLogger(BaseRDF.class.getName());
 
     protected static long NOTIFICATION_TIMEOUT = 10 * 60 * 1000L;
@@ -53,7 +53,11 @@ public abstract class BaseRDF {
     }
 
     public void addListener(UpdateListener listener) {
-        this.listeners.add(listener);
+        if (!this.listeners.contains(listener))
+            this.listeners.add(listener);
+        else
+            return;
+        log.warning("Total count of listeners: " + listeners);
         if (isDownloaded)
             listener.onUpdate();
     }
@@ -190,6 +194,17 @@ public abstract class BaseRDF {
     public boolean isDownloaded() {
         return isDownloaded || isNew;
     }
+
+    @Override
+    public void onUpdate() {
+        notifyListeners(null);
+    }
+
+    @Override
+    public void onError(Exception ex) {
+        notifyListeners(ex);
+    }
+
 
     public static class InteractionSIBTask {
 
