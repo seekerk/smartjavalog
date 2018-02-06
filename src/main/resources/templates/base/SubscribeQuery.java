@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import static org.fruct.oss.smartjavalog.base.KPIproxy.RDF_TYPE_URI;
-import static org.fruct.oss.smartjavalog.base.KPIproxy.SIB_ANY;
+import static org.fruct.oss.smartjavalog.base.BaseRDF.NOTIFICATION_TIMEOUT;
+import static org.fruct.oss.smartjavalog.base.KPIproxy.*;
 
 /**
  * Manage subscriptions by filtering incoming triplets.
@@ -58,9 +58,7 @@ public class SubscribeQuery {
                 //[1] - predicate (property | type)
                 //[2] - object (value | class)
                 //[3] - object type
-                if (triple.get(1).equals(RDF_TYPE_URI)) {
-                    process_insert_item(triple);
-                }
+                process_insert_item(triple);
             }
 
         }
@@ -100,19 +98,40 @@ public class SubscribeQuery {
 //    }
 
     private void process_insert_item(ArrayList<String> triple) {
-        log.info("process_insert_item for class: " + triple.get(2));
+        log.info("process_insert_item for " + triple);
 
-        // 1. search item in notifications
+        if (!triple.get(1).equals(RDF_TYPE_URI)) {
+            return;
+        }
+
+            // 1. search item in notifications
         if (registeredNotifications.contains(triple.get(0)))
             return;
         final BaseRDF.BaseRDFChildInstance instance = BaseRDF.getNotificatedInstance(triple.get(2));
         if (instance != null) {
             log.info("Search instance for notification " + triple.get(0));
-            SIBFactory.getInstance().getAccessPoint().queryRDF(triple.get(0), "http://oss.fruct.org/smartjavalog#notificationIndivide", "http://www.nokia.com/NRC/M3/sib#any", "uri", "literal").addListener(new TaskListener(){
+            SIBFactory.getInstance().getAccessPoint().queryRDF(triple.get(0), SIB_ANY, SIB_ANY, "uri", "literal").addListener(new TaskListener(){
                 @Override
                 public void onSuccess(SIBResponse response) {
                     for (ArrayList<String> striple : response.query_results) {
-                        if (!((String)triple.get(0)).equals(striple.get(0)) || !"http://oss.fruct.org/smartjavalog#notificationIndivide".equals(striple.get(1))) continue;
+                        // check that triple is our
+                        if (!((String) triple.get(0)).equals(striple.get(0))) continue;
+
+                        // check notification time and remove if notification is too old
+                        if (NOTIFICATION_UPDATE_TIME.equals(striple.get(1))) {
+                            if (Long.valueOf(striple.get(2)) < (System.currentTimeMillis() - 2 * NOTIFICATION_TIMEOUT) / 1000L) {
+                                log.warning("Remove old notification " + striple.get(0));
+                                SIBFactory.getInstance().getAccessPoint().removeInstance(striple.get(0));
+                                return;
+                            } else {
+                                log.warning("Notification time: " + striple.get(2) +" < " + (System.currentTimeMillis() - 2 * NOTIFICATION_TIMEOUT) / 1000L);
+                            }
+                        }
+                    }
+
+                    for(ArrayList<String> striple: response.query_results) {
+                        // skip notifications exept notification individe
+                        if (!NOTIFICATION_INDIVIDE.equals(striple.get(1))) continue;
                         log.info("Found instance " + striple.get(2) + "; notify him and exit");
                         //instance.getInstance(striple.get(2)).notifyListeners(null);
                         if (knownItems.containsKey(striple.get(2)) && knownItems.get(striple.get(2)).get() != null) {
@@ -191,6 +210,17 @@ public class SubscribeQuery {
             });
             task.execute();
         }
+
+        // parse old items in sib
+        task.addListener(new TaskListener() {
+            @Override
+            public void onSuccess(SIBResponse response) {
+                log.info("Old items: " + response.query_results.size());
+                for (ArrayList<String> triple : response.query_results) {
+                    process_insert_item(triple);
+                }
+            }
+        });
 
         return task;
     }
@@ -282,7 +312,7 @@ public class SubscribeQuery {
             if (!this.response.isConfirmed()) {
                 this.ex = new Exception("Subscription error: " + proxy.getCore().getErrMess());
             }
-            log.info("Subscribe result:" + response);
+            //log.info("Subscribe result:" + response);
         }
     }
 
