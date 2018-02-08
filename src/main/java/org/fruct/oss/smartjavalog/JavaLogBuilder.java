@@ -192,10 +192,10 @@ public class JavaLogBuilder {
         String path = this.outputFolder + "/" + packageName.replace(".", "/");
 
         try {
-            log.log(Level.INFO, "Create file \"" + path + "/" + fileName + "\"");
+            //log.log(Level.INFO, "Create file \"" + path + "/" + fileName + "\"");
             File outputDir = new File(path);
             if (!outputDir.exists()) {
-                log.log(Level.INFO, "Create path \"" + path + "\"");
+                //log.log(Level.INFO, "Create path \"" + path + "\"");
                 if (!outputDir.mkdirs()) {
                     System.err.println("Can't create folder \"" + outputDir.getAbsolutePath() + "\"");
                     exit(2);
@@ -233,8 +233,6 @@ public class JavaLogBuilder {
      * @param cls содержимое класса
      */
     private void printClass(OntologyObject cls) {
-        //TODO: доделать
-
         ST classContent;
         classContent = new ST(classTemplate, '$', '$');
         classContent.add("PACKAGE_NAME", packageName);
@@ -260,7 +258,10 @@ public class JavaLogBuilder {
                     ST setPropertyTemplate = new ST(setDataPropertyTemplate, '$', '$');
                     setPropertyTemplate.add("PROPERTY_NAME", propertyName);
                     setPropertyTemplate.add("PROPERTY_URI", property.getIRIString());
-                    setPropertyTemplate.add("PROPERTY_TYPE", getJavaType(type.type));
+                    setPropertyTemplate.add("PROPERTY_TYPE", getJavaType(type.getType()));
+                    setPropertyTemplate.add("MIN_CARDINALITY", type.getCardinality().getMinCardinality());
+                    setPropertyTemplate.add("MAX_CARDINALITY", type.getCardinality().getMaxCardinality());
+                    setPropertyTemplate.add("EXACT_CARDINALITY", type.getCardinality().getExactCardinality());
                     setPropertyCollector.append(setPropertyTemplate.render());
                 }
 
@@ -269,6 +270,9 @@ public class JavaLogBuilder {
                     setPropertyTemplate.add("PROPERTY_NAME", propertyName);
                     setPropertyTemplate.add("PROPERTY_URI", property.getIRIString());
                     setPropertyTemplate.add("PROPERTY_TYPE", "String");
+                    setPropertyTemplate.add("MIN_CARDINALITY", -1);
+                    setPropertyTemplate.add("MAX_CARDINALITY", -1);
+                    setPropertyTemplate.add("EXACT_CARDINALITY", -1);
                     setPropertyCollector.append(setPropertyTemplate.render());
                 }
 
@@ -289,9 +293,13 @@ public class JavaLogBuilder {
                 ST propertyTemplate = new ST(objectPropertyTemplate, '$', '$');
                 ST updatePropertyTemplate = new ST(updateObjectPropertyTemplate, '$', '$');
                 String propType = OntologyFactory.getInstance().getProperty(property).getClassValue();
+                Cardinality crd = OntologyFactory.getInstance().getProperty(property).getClassCardinality();
                 propertyTemplate.add("PROPERTY_NAME", propertyName);
                 propertyTemplate.add("PROPERTY_URI", property.getIRIString());
                 propertyTemplate.add("PROPERTY_TYPE", propType);
+                propertyTemplate.add("MIN_CARDINALITY", crd.getMinCardinality());
+                propertyTemplate.add("MAX_CARDINALITY", crd.getMaxCardinality());
+                propertyTemplate.add("EXACT_CARDINALITY", crd.getExactCardinality());
                 propertyCollector.append(propertyTemplate.render());
 
                 updatePropertyTemplate.add("PROPERTY_NAME", propertyName);

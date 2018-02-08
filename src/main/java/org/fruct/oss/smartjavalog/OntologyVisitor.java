@@ -78,7 +78,7 @@ public class OntologyVisitor implements OWLObjectVisitor {
     }
 
     /**
-     * свойство класса
+     * свойство класса (данные)
      * @param axiom контейнер свойства
      */
     @Override
@@ -125,6 +125,10 @@ public class OntologyVisitor implements OWLObjectVisitor {
 
         OWLObjectProperty property = axiom.objectPropertiesInSignature().collect(Collectors.toList()).get(0);
 
+        Cardinality crd = new Cardinality();
+        crd.parse(axiom.getRange());
+        //search cardinality
+
         List<OWLDatatype> datatypes = axiom.datatypesInSignature().collect(Collectors.toList());
         if (datatypes.size() > 0) {
             notParsed = false;
@@ -134,7 +138,7 @@ public class OntologyVisitor implements OWLObjectVisitor {
             }
 
             OntologyFactory.getInstance().addPropertyType(property,
-                    datatypes.get(0).getBuiltInDatatype());
+                    datatypes.get(0).getBuiltInDatatype(), crd);
             log.info("Add data property");
         }
 
@@ -146,7 +150,7 @@ public class OntologyVisitor implements OWLObjectVisitor {
                 throw new IllegalStateException("Not implemented for data properties size = " + datatypes.size());
             }
             OntologyFactory.getInstance().addPropertyType(property,
-                    properties.get(0).getIRI());
+                    properties.get(0).getIRI(), crd);
             log.info("Add complex data property: " + properties.get(0).getIRI());
         }
 
@@ -158,7 +162,7 @@ public class OntologyVisitor implements OWLObjectVisitor {
                 throw  new IllegalStateException("Not implemented for multiple classes size=" + classes.size());
             }
             OntologyFactory.getInstance().addPropertyType(property,
-                    classes.get(0).getIRI());
+                    classes.get(0).getIRI(), crd);
             log.info("Add class value property: " + classes.get(0).getIRI());
         }
 

@@ -26,7 +26,7 @@ class OntologyComplexDataType {
             throw new IllegalStateException("Multiple call of setType()");
 
         this.types = new ArrayList<>(1);
-        this.types.add(new DataTypeWithValue(type.getBuiltInDatatype(), null));
+        this.types.add(new DataTypeWithValue(type.getBuiltInDatatype(), null, null));
     }
 
     public void setType(OWLDataOneOf oneOfType) {
@@ -48,7 +48,7 @@ class OntologyComplexDataType {
             }
 
             if (!isKnownType)
-                this.types.add(new DataTypeWithValue(item.getDatatype().getBuiltInDatatype(), item.getLiteral()));
+                this.types.add(new DataTypeWithValue(item.getDatatype().getBuiltInDatatype(), item.getLiteral(), null));
         }
 
         this.oneOfType = true;
@@ -87,13 +87,18 @@ class OntologyComplexDataType {
     }
 
     public static class DataTypeWithValue {
-        OWL2Datatype type = null;
-        List<String> values = null;
+        private OWL2Datatype type = null;
+        private List<String> values = null;
+        private Cardinality cardinality = null;
 
-        DataTypeWithValue(OWL2Datatype type, String value) {
+        DataTypeWithValue(OWL2Datatype type, String value, Cardinality cardinality) {
             this.type = type;
             values = new ArrayList<>(1);
             this.values.add(value);
+            if (cardinality == null)
+                this.cardinality = new Cardinality();
+            else
+                this.cardinality = cardinality;
         }
 
         public OWL2Datatype getType() {
@@ -102,6 +107,10 @@ class OntologyComplexDataType {
 
         public List<String> getValue() {
             return values;
+        }
+
+        public Cardinality getCardinality() {
+            return cardinality;
         }
     }
 }

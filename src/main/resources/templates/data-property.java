@@ -1,7 +1,8 @@
 //------------ $PROPERTY_NAME$ --------------
 private static final String $PROPERTY_NAME$_URI = "$PROPERTY_URI$";
 private List<String> _$PROPERTY_NAME$_new = null;
-    
+
+
 public List<String> get$PROPERTY_NAME$() {
     if (_$PROPERTY_NAME$_new != null) {
         return _$PROPERTY_NAME$_new;
@@ -25,5 +26,5 @@ public <T> void set$PROPERTY_NAME$(List<T> value, boolean removeOldValues) {
         _$PROPERTY_NAME$_new.add(item.toString());
 }
 
-        $SET_DATA_PROPERTY$
+$SET_DATA_PROPERTY$
 //============== $PROPERTY_NAME$ =============

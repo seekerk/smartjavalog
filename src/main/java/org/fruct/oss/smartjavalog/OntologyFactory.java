@@ -84,12 +84,12 @@ public class OntologyFactory {
      * @param owlDataProperty свойство
      * @param type простой тип
      */
-    public void addPropertyType(OWLObjectProperty owlDataProperty, OWL2Datatype type) {
+    public void addPropertyType(OWLObjectProperty owlDataProperty, OWL2Datatype type, Cardinality crd) {
         IRI iri = owlDataProperty.getIRI();
         if (!properties.containsKey(iri.getIRIString())) {
             properties.put(iri.getIRIString(), new OntologyProperty(iri));
         }
-        properties.get(iri.getIRIString()).addDataType(type);
+        properties.get(iri.getIRIString()).addDataType(type, crd);
     }
 
     /**
@@ -97,14 +97,14 @@ public class OntologyFactory {
      * @param owlDataProperty свойство
      * @param complexType URL типа
      */
-    public void addPropertyType(OWLObjectProperty owlDataProperty, IRI complexType) {
+    public void addPropertyType(OWLObjectProperty owlDataProperty, IRI complexType, Cardinality crd) {
         IRI iri = owlDataProperty.getIRI();
 
         if (!properties.containsKey(iri.getIRIString())) {
             properties.put(iri.getIRIString(), new OntologyProperty(iri));
         }
 
-        properties.get(iri.getIRIString()).addDataType(complexType);
+        properties.get(iri.getIRIString()).addDataType(complexType, crd);
     }
 
     public void addObjectDataProperty(IRI iri) {

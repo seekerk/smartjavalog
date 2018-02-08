@@ -31,4 +31,17 @@
         }
         _$PROPERTY_NAME$_new.add(value);
     }
+
+    public int get$PROPERTY_NAME$$PROPERTY_TYPE$MinCardinality() {
+        return $MIN_CARDINALITY$;
+    }
+
+    public int get$PROPERTY_NAME$$PROPERTY_TYPE$MaxCardinality() {
+        return $MAX_CARDINALITY$;
+    }
+
+    public int get$PROPERTY_NAME$$PROPERTY_TYPE$ExactCardinality() {
+        return $EXACT_CARDINALITY$;
+    }
+
 //============== $PROPERTY_NAME$ =============
