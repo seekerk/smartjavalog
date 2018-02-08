@@ -24,6 +24,9 @@ public class OntologyFactory {
      */
     private Map<String, OntologyProperty> properties = new HashMap<>();
 
+    /**
+     * список сложных типов данных
+     */
     private Map<String, OntologyComplexDataType> types = new HashMap<>();
 
     private Map<String, String> comments = new HashMap<>();

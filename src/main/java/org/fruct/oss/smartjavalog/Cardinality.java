@@ -60,4 +60,9 @@ public class Cardinality {
             return minCardinality;
         return exactCardinality;
     }
+
+    @Override
+    public String toString() {
+        return "Cardinality {min=" + minCardinality + "; max=" + maxCardinality + "; exact=" + exactCardinality + "}";
+    }
 }
