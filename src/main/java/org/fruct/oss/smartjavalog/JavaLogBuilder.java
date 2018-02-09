@@ -233,7 +233,8 @@ public class JavaLogBuilder {
         Map<String, OntologyComplexDataType> dataTypes = OntologyFactory.getInstance().getDataTypes();
 
         for (OntologyComplexDataType type: dataTypes.values()) {
-            printComplexDataType(type);
+            if (type.isOnOfType())
+                printComplexDataType(type);
         }
     }
 
