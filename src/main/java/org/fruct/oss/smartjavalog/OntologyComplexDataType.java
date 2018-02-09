@@ -86,6 +86,14 @@ class OntologyComplexDataType {
         return otherTypes;
     }
 
+    public String getName() {
+        return name.getFragment();
+    }
+
+    public IRI getIRI() {
+        return name;
+    }
+
     public static class DataTypeWithValue {
         private OWL2Datatype type = null;
         private List<String> values = null;

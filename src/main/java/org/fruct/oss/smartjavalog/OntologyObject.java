@@ -41,14 +41,6 @@ public class OntologyObject {
         return name.getFragment();
     }
 
-    /**
-     * URL класса
-     * @return url класса
-     */
-    public String getURI() {
-        return name.getIRIString();
-    }
-
     public Map<String, IRI> getProperties() {
         return properties;
     }

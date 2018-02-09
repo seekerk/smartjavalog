@@ -65,6 +65,15 @@ public class OntologyProperty {
         return false;
     }
 
+    boolean isComplexDataProperty() {
+        for(IRI type: complexDataTypes.keySet()) {
+            if (OntologyFactory.getInstance().getDataType(type) != null)
+                return true;
+        }
+
+        return false;
+    }
+
     /**
      * Получение имени класса-значения
      * @return название класса-значения
@@ -78,6 +87,19 @@ public class OntologyProperty {
         return null;
     }
 
+    /**
+     * Получение имени класса-значения
+     * @return название класса-значения
+     */
+    public String getComplexDataValue() {
+        for (IRI type: complexDataTypes.keySet()) {
+            if (OntologyFactory.getInstance().getDataType(type) != null)
+                return type.getFragment();
+        }
+
+        return null;
+    }
+
     Cardinality getClassCardinality() {
         for (IRI type: complexDataTypes.keySet()) {
             if (OntologyFactory.getInstance().getObject(type) != null)
@@ -85,5 +107,23 @@ public class OntologyProperty {
         }
 
         return new Cardinality();
+    }
+
+    Cardinality getComplexDataCardinality() {
+        for (IRI type: complexDataTypes.keySet()) {
+            if (OntologyFactory.getInstance().getDataType(type) != null)
+                return complexDataTypes.get(type);
+        }
+
+        return new Cardinality();
+    }
+
+    public boolean isDataProperty() {
+        if (isObjectProperty())
+            return false;
+        if (isComplexDataProperty()) {
+            return false;
+        }
+        return true;
     }
 }

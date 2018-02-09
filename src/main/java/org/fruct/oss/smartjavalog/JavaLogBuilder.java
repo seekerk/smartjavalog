@@ -27,6 +27,9 @@ public class JavaLogBuilder {
     private static final String CLASS_TEMPLATE = "templates/class.java";
     private String classTemplate;
 
+    private static final String COMPLEX_DATA_TEMPLATE = "templates/complex-data.java";
+    private String complexDataTemplate;
+
     private static final String DATAPROPERTY_TEMPLATE = "templates/data-property.java";
     private String dataPropertyTemplate;
 
@@ -69,6 +72,7 @@ public class JavaLogBuilder {
 
     JavaLogBuilder() {
         classTemplate = loadTemplate(CLASS_TEMPLATE);
+        complexDataTemplate = loadTemplate(COMPLEX_DATA_TEMPLATE);
         dataPropertyTemplate = loadTemplate(DATAPROPERTY_TEMPLATE);
         setDataPropertyTemplate = loadTemplate(SETDATAPROPERTY_TEMPLATE);
         objectPropertyTemplate = loadTemplate(OBJECTPROPERTY_TEMPLATE);
@@ -225,6 +229,12 @@ public class JavaLogBuilder {
         for (OntologyObject ontologyObject : classes.values()) {
             printClass(ontologyObject);
         }
+
+        Map<String, OntologyComplexDataType> dataTypes = OntologyFactory.getInstance().getDataTypes();
+
+        for (OntologyComplexDataType type: dataTypes.values()) {
+            printComplexDataType(type);
+        }
     }
 
     /**
@@ -237,7 +247,7 @@ public class JavaLogBuilder {
         classContent = new ST(classTemplate, '$', '$');
         classContent.add("PACKAGE_NAME", packageName);
         classContent.add("CLASS_NAME", cls.getName());
-        classContent.add("CLASS_URI", cls.getURI());
+        classContent.add("CLASS_URI", cls.getIRI().getIRIString());
         classContent.add("CLASS_DESCRIPTION", " * " + OntologyFactory.getInstance().getComment(cls.getIRI()));
 
         StringBuilder propertyCollector = new StringBuilder();
@@ -246,7 +256,7 @@ public class JavaLogBuilder {
         Map<String, IRI> classProperties = cls.getProperties();
         for (IRI property : classProperties.values()) {
             String propertyName = property.getFragment().substring(0,1).toUpperCase() + property.getFragment().substring(1);
-            if (OntologyFactory.getInstance().isDataProperty(property)) {
+            if (OntologyFactory.getInstance().isSimpleDataProperty(property)) {
                 // если это не класс, а данные, то выбираем тип
                 log.info("Found data property \"" + property.getFragment() + "\" for class \"" + cls.getName() + "\"");
                 List<OntologyComplexDataType.DataTypeWithValue> types = OntologyFactory.getInstance().getProperty(property).getOWLDataTypes();
@@ -287,6 +297,26 @@ public class JavaLogBuilder {
                 updatePropertyTemplate.add("PROPERTY_URI", property.getIRIString());
                 updatePropertyCollector.append(updatePropertyTemplate.render());
 
+            } else if (OntologyFactory.getInstance().isComplexDataProperty(property)) {
+                log.info("Found complex data property\"" + property.getFragment() + "\" for class \"" + cls.getName() + "\"");
+
+                ST propertyTemplate = new ST(objectPropertyTemplate, '$', '$');
+                ST updatePropertyTemplate = new ST(updateObjectPropertyTemplate, '$', '$');
+                String propType = OntologyFactory.getInstance().getProperty(property).getComplexDataValue();
+                Cardinality crd = OntologyFactory.getInstance().getProperty(property).getComplexDataCardinality();
+                propertyTemplate.add("PROPERTY_NAME", propertyName);
+                propertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                propertyTemplate.add("PROPERTY_TYPE", propType);
+                propertyTemplate.add("MIN_CARDINALITY", crd.getMinCardinality());
+                propertyTemplate.add("MAX_CARDINALITY", crd.getMaxCardinality());
+                propertyTemplate.add("EXACT_CARDINALITY", crd.getExactCardinality());
+                propertyCollector.append(propertyTemplate.render());
+
+                updatePropertyTemplate.add("PROPERTY_NAME", propertyName);
+                updatePropertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                updatePropertyTemplate.add("PROPERTY_TYPE", propType);
+                updatePropertyCollector.append(updatePropertyTemplate.render());
+
             } else {
                 // это класс, просто добавяем к списку
                 log.info("Found class property\"" + property.getFragment() + "\" for class \"" + cls.getName() + "\"");
@@ -315,6 +345,17 @@ public class JavaLogBuilder {
 
 
         saveFile(cls.getName() + ".java", classContent.render());
+    }
+
+    private void printComplexDataType(OntologyComplexDataType dataType) {
+        ST dataTypeContent;
+        dataTypeContent = new ST(complexDataTemplate, '$', '$');
+        dataTypeContent.add("PACKAGE_NAME", packageName);
+        dataTypeContent.add("TYPE_NAME", dataType.getName());
+        dataTypeContent.add("TYPE_URI", dataType.getIRI().getIRIString());
+        dataTypeContent.add("TYPE_DESCRIPTION", " * " + OntologyFactory.getInstance().getComment(dataType.getIRI()));
+
+        saveFile(dataType.getName() + ".java", dataTypeContent.render());
     }
 
     private String getJavaType(OWL2Datatype type) {

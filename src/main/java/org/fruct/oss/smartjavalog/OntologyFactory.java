@@ -120,16 +120,32 @@ public class OntologyFactory {
         return objects;
     }
 
+    Map<String, OntologyComplexDataType> getDataTypes() {
+        return types;
+    }
+
     /**
      * Проверка, является ли свойство класса свойством данных или ссылкой на другой класс
      * @param property URI свойства
      * @return true если это свойство данных, false если это свойство класса
      */
-    public boolean isDataProperty(IRI property) {
+    boolean isSimpleDataProperty(IRI property) {
         if (!properties.containsKey(property.getIRIString()))
             throw new IllegalStateException("Unknown property \"" + property.getIRIString() + "\"");
 
-        return !properties.get(property.getIRIString()).isObjectProperty();
+        return properties.get(property.getIRIString()).isDataProperty();
+    }
+
+    /**
+     * Проверка, является ли свойство класса свойством данных или ссылкой на другой класс
+     * @param property URI свойства
+     * @return true если это свойство данных, false если это свойство класса
+     */
+    boolean isComplexDataProperty(IRI property) {
+        if (!properties.containsKey(property.getIRIString()))
+            throw new IllegalStateException("Unknown property \"" + property.getIRIString() + "\"");
+
+        return properties.get(property.getIRIString()).isComplexDataProperty();
     }
 
     /**
