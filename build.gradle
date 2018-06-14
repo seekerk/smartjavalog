@@ -66,11 +66,14 @@ dependencies {
     // https://mvnrepository.com/artifact/org.antlr/ST4
     compile group: 'org.antlr', name: 'ST4', version: '4.0.7'
 
-    testImplementation(
+    testCompile(
             'org.junit.jupiter:junit-jupiter-api:5.1.0'
     )
-    testRuntimeOnly(
-            'org.junit.jupiter:junit-jupiter-engine:5.1.0'
+    testRuntime(
+            'org.junit.jupiter:junit-jupiter-engine:5.1.0',
+            'org.junit.vintage:junit-vintage-engine:5.1.0',
+            'org.junit.platform:junit-platform-launcher:1.1.0',
+            'org.junit.platform:junit-platform-runner:1.1.0'
     )
 }
 
