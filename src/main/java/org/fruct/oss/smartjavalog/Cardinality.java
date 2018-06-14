@@ -65,4 +65,18 @@ public class Cardinality {
     public String toString() {
         return "Cardinality {min=" + minCardinality + "; max=" + maxCardinality + "; exact=" + exactCardinality + "}";
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+
+        if (getClass() != obj.getClass())
+            return false;
+
+        Cardinality other = (Cardinality)obj;
+        return minCardinality == other.minCardinality &&
+                exactCardinality == other.exactCardinality &&
+                maxCardinality == other.maxCardinality;
+    }
 }
