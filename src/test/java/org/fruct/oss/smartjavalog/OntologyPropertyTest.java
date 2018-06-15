@@ -31,7 +31,7 @@ class OntologyPropertyTest {
         property.addDataType(IRI.create("class.iri"), new Cardinality());
         assertTrue(property.isObjectProperty());
         assertFalse(property.isDataProperty());
-        assertEquals(property.getOWLDataTypes().size(), 1);
+        assertEquals(property.getOWLDataTypes().size(), 0);
     }
 
     @Test
@@ -40,6 +40,7 @@ class OntologyPropertyTest {
         property.addDataType(IRI.create("class.iri"), new Cardinality());
         assertTrue(property.isObjectProperty());
         assertFalse(property.isDataProperty());
+        assertEquals(property.getOWLDataTypes().size(), 0);
     }
 
     @Test
@@ -47,6 +48,7 @@ class OntologyPropertyTest {
         property.addDataType(IRI.create("not.class.iri"), new Cardinality());
         assertFalse(property.isObjectProperty());
         assertTrue(property.isDataProperty());
+        assertEquals(property.getOWLDataTypes().size(), 0);
     }
 
     @Test
@@ -54,6 +56,7 @@ class OntologyPropertyTest {
         property.addDataType(OWL2Datatype.XSD_BOOLEAN, new Cardinality());
         assertFalse(property.isObjectProperty());
         assertTrue(property.isDataProperty());
+        assertEquals(property.getOWLDataTypes().size(), 1);
     }
 
     @Test
@@ -63,6 +66,7 @@ class OntologyPropertyTest {
         assertEquals(property.getClassCardinality(), new Cardinality());
         assertNull(property.getComplexDataValue());
         assertEquals(property.getComplexDataCardinality(), new Cardinality());
+        assertEquals(property.getOWLDataTypes().size(), 0);
     }
 
     @Test
@@ -72,6 +76,7 @@ class OntologyPropertyTest {
         assertEquals(property.getClassCardinality(), new Cardinality());
         assertNull(property.getComplexDataValue());
         assertEquals(property.getComplexDataCardinality(), new Cardinality());
+        assertEquals(property.getOWLDataTypes().size(), 0);
     }
 
     @Test
@@ -82,5 +87,6 @@ class OntologyPropertyTest {
         assertTrue(property.isComplexDataProperty());
         assertEquals(property.getComplexDataValue(), IRI.create("complex.type.iri").getFragment());
         assertEquals(property.getComplexDataCardinality(), new Cardinality());
+        assertNull(property.getOWLDataTypes());
     }
 }
