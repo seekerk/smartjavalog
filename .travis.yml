@@ -4,10 +4,7 @@ sudo: false
 
 after_success:
   - ./gradlew jacocoTestReport coveralls
-  - ./gradlew sonarqube \
-  -Dsonar.organization=seekerk-github \
-  -Dsonar.host.url=https://sonarcloud.io \
-  -Dsonar.login=$SONAR_TOKEN
+  - ./gradlew sonarqube -Dsonar.organization=seekerk-github -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
 
 notifications:
   email: false
