@@ -43,7 +43,9 @@ public class OntologyProperty {
         log.info("complexTypes: " + complexDataTypes);
         for (IRI type: complexDataTypes.keySet()) {
             OntologyComplexDataType dataType = OntologyFactory.getInstance().getDataType(type);
-            ret = dataType.getOWLDataTypes();
+            if (dataType != null) {
+                ret = dataType.getOWLDataTypes();
+            }
         }
 
         // поиск среди известных типов

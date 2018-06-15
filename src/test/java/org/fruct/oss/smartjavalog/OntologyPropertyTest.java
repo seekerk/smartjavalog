@@ -27,7 +27,6 @@ class OntologyPropertyTest {
     }
 
     @Test
-    @Disabled
     void isSimpleObjectProperty() {
         property.addDataType(IRI.create("class.iri"), new Cardinality());
         assertTrue(property.isObjectProperty());
