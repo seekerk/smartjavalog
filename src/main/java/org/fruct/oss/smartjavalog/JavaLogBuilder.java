@@ -131,7 +131,7 @@ public class JavaLogBuilder {
         try {
             ontology = manager.loadOntologyFromOntologyDocument(new File(owlFile));
         } catch (OWLOntologyCreationException e) {
-            e.printStackTrace();
+            log.log(Level.SEVERE, "Parse error", e);
             return;
         }
         System.err.println("Loaded ontology: " + ontology.getAxiomCount() + " axioms");
@@ -421,8 +421,6 @@ public class JavaLogBuilder {
         ZipFile zf;
         try{
             zf = new ZipFile(file);
-        } catch(final ZipException e){
-            throw new Error(e);
         } catch(final IOException e){
             throw new Error(e);
         }
