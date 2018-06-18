@@ -6,7 +6,10 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.stringtemplate.v4.ST;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -15,7 +18,6 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import static java.lang.System.exit;
@@ -126,7 +128,7 @@ public class JavaLogBuilder {
     /**
      * Parse owl/rdf file
      */
-    void parse() throws IOException {
+    void parse() {
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         try {
             ontology = manager.loadOntologyFromOntologyDocument(new File(owlFile));

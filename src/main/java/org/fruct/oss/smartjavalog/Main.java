@@ -40,13 +40,8 @@ public class Main {
         System.out.println("Used platform: \"" + javalog.getPlatform() + "\"");
 
         //open file
-        try {
-            javalog.parse();
-        } catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            exit(3);
-        }
-        
+        javalog.parse();
+
 //        // создаем результирующий каталог
 //        File outputDir = new File(javalog.getOutputFolder() + "/" + javalog.getPackageName().replace(".","/"));
 //        if (!outputDir.exists()) {
