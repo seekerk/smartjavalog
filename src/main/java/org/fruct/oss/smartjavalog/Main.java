@@ -1,6 +1,7 @@
 package org.fruct.oss.smartjavalog;
 
 import org.apache.commons.cli.*;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 import static java.lang.System.exit;
 
@@ -16,7 +17,7 @@ public class Main {
      *
      * @param args command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws OWLOntologyCreationException {
         JavaLogBuilder javalog = new JavaLogBuilder();
 
         CommandLine cmd = parseOptions(args);

@@ -47,6 +47,8 @@ public class JavaLogBuilder {
     private String updateObjectPropertyTemplate;
 
     private static final String PACKAGE_NAME_NODE = "PACKAGE_NAME";
+    private static final String PROPERTY_NAME_NODE = "PROPERTY_NAME";
+    private static final String PROPERTY_URI_NODE = "PROPERTY_URI";
 
     /**
      * источник данных
@@ -71,7 +73,7 @@ public class JavaLogBuilder {
 
     private OWLOntology ontology = null;
 
-    private static String smartJavalogPackageName = "org.fruct.oss.smartjavalog.base";
+    private static final String smartJavalogPackageName = "org.fruct.oss.smartjavalog.base";
 
     JavaLogBuilder() {
         classTemplate = loadTemplate(CLASS_TEMPLATE);
@@ -129,14 +131,9 @@ public class JavaLogBuilder {
     /**
      * Parse owl/rdf file
      */
-    void parse() {
+    void parse() throws OWLOntologyCreationException {
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-        try {
-            ontology = manager.loadOntologyFromOntologyDocument(new File(owlFile));
-        } catch (OWLOntologyCreationException e) {
-            log.error("Parse error", e);
-            return;
-        }
+        ontology = manager.loadOntologyFromOntologyDocument(new File(owlFile));
         log.info("Loaded ontology: " + ontology.getAxiomCount() + " axioms");
     }
 
@@ -253,8 +250,8 @@ public class JavaLogBuilder {
                 // пробегаемся по типам
                 for (OntologyComplexDataType.DataTypeWithValue type : types) {
                     ST setPropertyTemplate = new ST(setDataPropertyTemplate, '$', '$');
-                    setPropertyTemplate.add("PROPERTY_NAME", propertyName);
-                    setPropertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                    setPropertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
+                    setPropertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
                     setPropertyTemplate.add("PROPERTY_TYPE", getJavaType(type.getType()));
                     setPropertyTemplate.add("MIN_CARDINALITY", type.getCardinality().getMinCardinality());
                     setPropertyTemplate.add("MAX_CARDINALITY", type.getCardinality().getMaxCardinality());
@@ -264,8 +261,8 @@ public class JavaLogBuilder {
 
                 if (types.size() == 0) {
                     ST setPropertyTemplate = new ST(setDataPropertyTemplate, '$', '$');
-                    setPropertyTemplate.add("PROPERTY_NAME", propertyName);
-                    setPropertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                    setPropertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
+                    setPropertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
                     setPropertyTemplate.add("PROPERTY_TYPE", "String");
                     setPropertyTemplate.add("MIN_CARDINALITY", -1);
                     setPropertyTemplate.add("MAX_CARDINALITY", -1);
@@ -275,13 +272,13 @@ public class JavaLogBuilder {
 
                 ST propertyTemplate = new ST(dataPropertyTemplate, '$', '$');
                 ST updatePropertyTemplate = new ST(updateDataPropertyTemplate, '$', '$');
-                propertyTemplate.add("PROPERTY_NAME", propertyName);
-                propertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                propertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
+                propertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
                 propertyTemplate.add("SET_DATA_PROPERTY", setPropertyCollector.toString());
                 propertyCollector.append(propertyTemplate.render());
 
-                updatePropertyTemplate.add("PROPERTY_NAME", propertyName);
-                updatePropertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                updatePropertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
+                updatePropertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
                 updatePropertyCollector.append(updatePropertyTemplate.render());
 
             } else if (OntologyFactory.getInstance().isComplexDataProperty(property)) {
@@ -291,16 +288,16 @@ public class JavaLogBuilder {
                 ST updatePropertyTemplate = new ST(updateObjectPropertyTemplate, '$', '$');
                 String propType = OntologyFactory.getInstance().getProperty(property).getComplexDataValue();
                 Cardinality crd = OntologyFactory.getInstance().getProperty(property).getComplexDataCardinality();
-                propertyTemplate.add("PROPERTY_NAME", propertyName);
-                propertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                propertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
+                propertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
                 propertyTemplate.add("PROPERTY_TYPE", propType);
                 propertyTemplate.add("MIN_CARDINALITY", crd.getMinCardinality());
                 propertyTemplate.add("MAX_CARDINALITY", crd.getMaxCardinality());
                 propertyTemplate.add("EXACT_CARDINALITY", crd.getExactCardinality());
                 propertyCollector.append(propertyTemplate.render());
 
-                updatePropertyTemplate.add("PROPERTY_NAME", propertyName);
-                updatePropertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                updatePropertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
+                updatePropertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
                 updatePropertyTemplate.add("PROPERTY_TYPE", propType);
                 updatePropertyCollector.append(updatePropertyTemplate.render());
 
@@ -311,16 +308,16 @@ public class JavaLogBuilder {
                 ST updatePropertyTemplate = new ST(updateObjectPropertyTemplate, '$', '$');
                 String propType = OntologyFactory.getInstance().getProperty(property).getClassValue();
                 Cardinality crd = OntologyFactory.getInstance().getProperty(property).getClassCardinality();
-                propertyTemplate.add("PROPERTY_NAME", propertyName);
-                propertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                propertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
+                propertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
                 propertyTemplate.add("PROPERTY_TYPE", propType);
                 propertyTemplate.add("MIN_CARDINALITY", crd.getMinCardinality());
                 propertyTemplate.add("MAX_CARDINALITY", crd.getMaxCardinality());
                 propertyTemplate.add("EXACT_CARDINALITY", crd.getExactCardinality());
                 propertyCollector.append(propertyTemplate.render());
 
-                updatePropertyTemplate.add("PROPERTY_NAME", propertyName);
-                updatePropertyTemplate.add("PROPERTY_URI", property.getIRIString());
+                updatePropertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
+                updatePropertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
                 updatePropertyTemplate.add("PROPERTY_TYPE", propType);
                 updatePropertyCollector.append(updatePropertyTemplate.render());
 
