@@ -1,6 +1,7 @@
 package org.fruct.oss.smartjavalog;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -13,8 +14,6 @@ import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -97,25 +96,25 @@ public class JavaLogBuilder {
         try {
             result = IOUtils.toString(classLoader.getResourceAsStream(fileName), "UTF-8");
         } catch (IOException | NullPointerException ex) {
-            log.log(Level.SEVERE, null, ex);
+            log.error("Can't load template " + fileName, ex);
         }
 
         return result;
     }
 
-    public void setOwlFile(String owlFile) {
+    void setOwlFile(String owlFile) {
         this.owlFile = owlFile;
     }
 
-    public String getOwlFile() {
+    String getOwlFile() {
         return owlFile;
     }
 
-    public void setPackageName(String packageName) {
+    void setPackageName(String packageName) {
         this.packageName = packageName;
     }
 
-    public String getPackageName() {
+    String getPackageName() {
         return packageName;
     }
 
@@ -123,7 +122,7 @@ public class JavaLogBuilder {
         this.outputFolder = outputFolder;
     }
 
-    public String getOutputFolder() {
+    String getOutputFolder() {
         return outputFolder;
     }
 
@@ -135,10 +134,10 @@ public class JavaLogBuilder {
         try {
             ontology = manager.loadOntologyFromOntologyDocument(new File(owlFile));
         } catch (OWLOntologyCreationException e) {
-            log.log(Level.SEVERE, "Parse error", e);
+            log.error("Parse error", e);
             return;
         }
-        log.fine("Loaded ontology: " + ontology.getAxiomCount() + " axioms");
+        log.info("Loaded ontology: " + ontology.getAxiomCount() + " axioms");
     }
 
     private void generateFactory() {
@@ -189,7 +188,7 @@ public class JavaLogBuilder {
             //log.log(Level.INFO, "Create file \"" + path + "/" + fileName + "\"");
             File outputDir = new File(path);
             if (!outputDir.exists() && !outputDir.mkdirs()) {
-                log.log(Level.SEVERE, "Can't create folder \"" + outputDir.getAbsolutePath() + "\"");
+                log.error("Can't create folder \"" + outputDir.getAbsolutePath() + "\"");
                 exit(2);
             }
 
@@ -197,7 +196,7 @@ public class JavaLogBuilder {
             writer.print(value);
             writer.close();
         } catch (FileNotFoundException ex) {
-            log.log(Level.SEVERE, null, ex);
+            log.error("Save file error", ex);
         }
     }
 

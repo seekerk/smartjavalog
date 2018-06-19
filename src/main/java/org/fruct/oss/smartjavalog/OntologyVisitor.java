@@ -1,11 +1,11 @@
 package org.fruct.oss.smartjavalog;
 
+import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.model.*;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class OntologyVisitor implements OWLObjectVisitor {
@@ -15,7 +15,7 @@ public class OntologyVisitor implements OWLObjectVisitor {
     @Override
     @ParametersAreNonnullByDefault
     public void visit(OWLDataPropertyRangeAxiom axiom) {
-        log.info(() -> "Parse " + axiom.toString());
+        log.info("Parse " + axiom.toString());
 
         axiom.getRange().accept(new OWLDataRangeVisitor() {
             @Override
@@ -55,7 +55,7 @@ public class OntologyVisitor implements OWLObjectVisitor {
     @Override
     @ParametersAreNonnullByDefault
     public void visit(OWLDeclarationAxiom axiom) {
-        log.info(() -> "Parse " + axiom);
+        log.info("Parse " + axiom);
 
         switch (axiom.getEntity().getEntityType().getName()) {
             case "DataProperty": {

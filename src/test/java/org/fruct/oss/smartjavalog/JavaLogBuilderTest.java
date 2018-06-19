@@ -1,7 +1,8 @@
 package org.fruct.oss.smartjavalog;
 
+import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.spi.LoggingEvent;
 import org.junit.jupiter.api.Test;
-import org.slf4j.event.LoggingEvent;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -41,6 +42,30 @@ class JavaLogBuilderTest {
             fail(e);
         }
 
+
+
         //@TODO: добавить проверку вывода в лог сообщения
+    }
+
+    class TestAppender extends AppenderSkeleton {
+        private final List<LoggingEvent> log = new ArrayList<LoggingEvent>();
+
+        @Override
+        public boolean requiresLayout() {
+            return false;
+        }
+
+        @Override
+        protected void append(final LoggingEvent loggingEvent) {
+            log.add(loggingEvent);
+        }
+
+        @Override
+        public void close() {
+        }
+
+        public List<LoggingEvent> getLog() {
+            return new ArrayList<LoggingEvent>(log);
+        }
     }
 }

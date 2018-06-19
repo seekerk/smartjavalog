@@ -1,5 +1,6 @@
 package org.fruct.oss.smartjavalog;
 
+import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
@@ -7,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public class OntologyProperty {
 
