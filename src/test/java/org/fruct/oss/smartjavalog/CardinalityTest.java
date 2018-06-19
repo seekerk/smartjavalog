@@ -120,4 +120,25 @@ class CardinalityTest {
         assertEquals(5, cardinality.getMaxCardinality());
         assertEquals(-1, cardinality.getExactCardinality());
     }
+
+    @Test
+    void objectExactCardinalityTest() {
+        Cardinality cardinality = new Cardinality();
+        assertEquals(-1, cardinality.getExactCardinality());
+
+        OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+        OWLOntology ontology = null;
+        try {
+            ontology = manager.loadOntologyFromOntologyDocument(new File(Objects.requireNonNull(getClass().getClassLoader().getResource("CardinalityTest/objectCardinalityExact.owl")).getFile()));
+        } catch (OWLOntologyCreationException e) {
+            fail(e);
+        }
+        List<OWLAxiom> axiomList = ontology.axioms().collect(Collectors.toList());
+        for (OWLAxiom axiom : axiomList) {
+            if (axiom.getAxiomType().equals(AxiomType.OBJECT_PROPERTY_RANGE)) {
+                cardinality.parse(((OWLObjectPropertyRangeAxiom) axiom).getRange());
+            }
+        }
+        assertEquals(8, cardinality.getExactCardinality());
+    }
 }
