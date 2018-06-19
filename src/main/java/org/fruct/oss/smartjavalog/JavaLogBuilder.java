@@ -47,15 +47,17 @@ public class JavaLogBuilder {
     private static final String UPDATE_OBJECTPROPERTY_TEMPLATE = "templates/update-object-property.java";
     private String updateObjectPropertyTemplate;
 
+    private static final String PACKAGE_NAME_NODE = "PACKAGE_NAME";
+
     /**
      * источник данных
      */
-    private String owlFile;// = "samples/user.owl";
+    private String owlFile;
 
     /**
      * имя пакета
      */
-    private String packageName;// = "org.fruct.oss";
+    private String packageName;
 
     /**
      * директория для записи данных
@@ -136,7 +138,7 @@ public class JavaLogBuilder {
             log.log(Level.SEVERE, "Parse error", e);
             return;
         }
-        System.err.println("Loaded ontology: " + ontology.getAxiomCount() + " axioms");
+        log.fine("Loaded ontology: " + ontology.getAxiomCount() + " axioms");
     }
 
     private void generateFactory() {
@@ -150,7 +152,7 @@ public class JavaLogBuilder {
             String templateContent = loadTemplate(patternFile);
 
             factoryContent = new ST(templateContent, '$', '$');
-            factoryContent.add("PACKAGE_NAME", packageName);
+            factoryContent.add(PACKAGE_NAME_NODE, packageName);
 
             saveFile(getFileName(patternFile), factoryContent.render(), smartJavalogPackageName);
         }
@@ -165,7 +167,7 @@ public class JavaLogBuilder {
             String templateContent = loadTemplate(patternFile);
 
             factoryContent = new ST(templateContent, '$', '$');
-            factoryContent.add("PACKAGE_NAME", packageName);
+            factoryContent.add(PACKAGE_NAME_NODE, packageName);
 
             saveFile(getFileName(patternFile), factoryContent.render(), smartJavalogPackageName);
         }
@@ -248,7 +250,7 @@ public class JavaLogBuilder {
     private void printClass(OntologyObject cls) {
         ST classContent;
         classContent = new ST(classTemplate, '$', '$');
-        classContent.add("PACKAGE_NAME", packageName);
+        classContent.add(PACKAGE_NAME_NODE, packageName);
         classContent.add("CLASS_NAME", cls.getName());
         classContent.add("CLASS_URI", cls.getIRI().getIRIString());
         classContent.add("CLASS_DESCRIPTION", " * " + OntologyFactory.getInstance().getComment(cls.getIRI()));
@@ -353,7 +355,7 @@ public class JavaLogBuilder {
     private void printComplexDataType(OntologyComplexDataType dataType) {
         ST dataTypeContent;
         dataTypeContent = new ST(complexDataTemplate, '$', '$');
-        dataTypeContent.add("PACKAGE_NAME", packageName);
+        dataTypeContent.add(PACKAGE_NAME_NODE, packageName);
         dataTypeContent.add("TYPE_NAME", dataType.getName());
         dataTypeContent.add("TYPE_URI", dataType.getIRI().getIRIString());
         dataTypeContent.add("TYPE_DESCRIPTION", " * " + OntologyFactory.getInstance().getComment(dataType.getIRI()));

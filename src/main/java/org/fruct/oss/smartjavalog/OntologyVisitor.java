@@ -15,7 +15,7 @@ public class OntologyVisitor implements OWLObjectVisitor {
     @Override
     @ParametersAreNonnullByDefault
     public void visit(OWLDataPropertyRangeAxiom axiom) {
-        log.info("Parse " + axiom.toString());
+        log.info(() -> "Parse " + axiom.toString());
 
         axiom.getRange().accept(new OWLDataRangeVisitor() {
             @Override
@@ -55,7 +55,7 @@ public class OntologyVisitor implements OWLObjectVisitor {
     @Override
     @ParametersAreNonnullByDefault
     public void visit(OWLDeclarationAxiom axiom) {
-        log.info("Parse " + axiom);
+        log.info(() -> "Parse " + axiom);
 
         switch (axiom.getEntity().getEntityType().getName()) {
             case "DataProperty": {

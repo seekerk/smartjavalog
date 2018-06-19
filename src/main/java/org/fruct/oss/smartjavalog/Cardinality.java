@@ -5,8 +5,6 @@ import org.semanticweb.owlapi.model.*;
 import java.util.logging.Logger;
 
 public class Cardinality {
-    private static Logger log = Logger.getLogger(Cardinality.class.getName());
-
     private int minCardinality = -1;
 
     private int exactCardinality = -1;
