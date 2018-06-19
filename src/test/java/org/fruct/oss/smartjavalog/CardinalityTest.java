@@ -1,6 +1,5 @@
 package org.fruct.oss.smartjavalog;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
@@ -36,7 +35,7 @@ class CardinalityTest {
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLOntology ontology = null;
         try {
-            ontology = manager.loadOntologyFromOntologyDocument(new File(Objects.requireNonNull(getClass().getClassLoader().getResource("CardinalityTest/minCardinality3.owl")).getFile()));
+            ontology = manager.loadOntologyFromOntologyDocument(new File(Objects.requireNonNull(getClass().getClassLoader().getResource("Cardinality/minCardinality3.owl")).getFile()));
         } catch (OWLOntologyCreationException e) {
             fail(e);
         }
@@ -59,7 +58,7 @@ class CardinalityTest {
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLOntology ontology = null;
         try {
-            ontology = manager.loadOntologyFromOntologyDocument(new File(Objects.requireNonNull(getClass().getClassLoader().getResource("CardinalityTest/exactCardinality4.owl")).getFile()));
+            ontology = manager.loadOntologyFromOntologyDocument(new File(Objects.requireNonNull(getClass().getClassLoader().getResource("Cardinality/exactCardinality4.owl")).getFile()));
         } catch (OWLOntologyCreationException e) {
             fail(e);
         }
@@ -82,7 +81,7 @@ class CardinalityTest {
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLOntology ontology = null;
         try {
-            ontology = manager.loadOntologyFromOntologyDocument(new File(Objects.requireNonNull(getClass().getClassLoader().getResource("CardinalityTest/maxCardinality2.owl")).getFile()));
+            ontology = manager.loadOntologyFromOntologyDocument(new File(Objects.requireNonNull(getClass().getClassLoader().getResource("Cardinality/maxCardinality2.owl")).getFile()));
         } catch (OWLOntologyCreationException e) {
             fail(e);
         }
@@ -106,7 +105,7 @@ class CardinalityTest {
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLOntology ontology = null;
         try {
-            ontology = manager.loadOntologyFromOntologyDocument(new File(Objects.requireNonNull(getClass().getClassLoader().getResource("CardinalityTest/objectCardinalityMinMax.owl")).getFile()));
+            ontology = manager.loadOntologyFromOntologyDocument(new File(Objects.requireNonNull(getClass().getClassLoader().getResource("Cardinality/objectCardinalityMinMax.owl")).getFile()));
         } catch (OWLOntologyCreationException e) {
             fail(e);
         }
@@ -129,7 +128,7 @@ class CardinalityTest {
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLOntology ontology = null;
         try {
-            ontology = manager.loadOntologyFromOntologyDocument(new File(Objects.requireNonNull(getClass().getClassLoader().getResource("CardinalityTest/objectCardinalityExact.owl")).getFile()));
+            ontology = manager.loadOntologyFromOntologyDocument(new File(Objects.requireNonNull(getClass().getClassLoader().getResource("Cardinality/objectCardinalityExact.owl")).getFile()));
         } catch (OWLOntologyCreationException e) {
             fail(e);
         }

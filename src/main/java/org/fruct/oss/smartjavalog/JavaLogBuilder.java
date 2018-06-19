@@ -94,7 +94,7 @@ public class JavaLogBuilder {
         ClassLoader classLoader = getClass().getClassLoader();
         try {
             result = IOUtils.toString(classLoader.getResourceAsStream(fileName), "UTF-8");
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             log.log(Level.SEVERE, null, ex);
         }
 

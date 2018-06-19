@@ -4,6 +4,7 @@ import org.semanticweb.owlapi.model.*;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -108,8 +109,9 @@ public class OntologyVisitor implements OWLObjectVisitor {
             @Override
             public void visit(OWLLiteral node) {
                 //System.err.println(node.getLiteral()); // текст сообщения
-                if (axiom.getSubject().asIRI().isPresent())
-                    OntologyFactory.getInstance().addComment(axiom.getSubject().asIRI().get(), node.getLiteral());
+                Optional<IRI> iri = axiom.getSubject().asIRI();
+                if (iri.isPresent())
+                    OntologyFactory.getInstance().addComment(iri.get(), node.getLiteral());
                 else
                     throw new IllegalStateException("Not implemented");
             }
