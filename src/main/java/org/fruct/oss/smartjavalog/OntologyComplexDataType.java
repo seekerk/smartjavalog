@@ -1,14 +1,18 @@
 package org.fruct.oss.smartjavalog;
 
-import org.semanticweb.owlapi.model.*;
+import org.apache.log4j.Logger;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLDataOneOf;
+import org.semanticweb.owlapi.model.OWLDatatype;
+import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 class OntologyComplexDataType {
+    private static final Logger log = Logger.getLogger(OntologyComplexDataType.class.getName());
 
     private IRI name;
 
@@ -36,7 +40,7 @@ class OntologyComplexDataType {
         List<OWLLiteral> items = oneOfType.values().collect(Collectors.toList());
         this.types = new ArrayList<>(items.size());
         for (OWLLiteral item : items) {
-            System.err.println("Item = " + item.getDatatype() + ": " + item.getLiteral() + " (" + item + ")");
+            log.info("Item = " + item.getDatatype() + ": " + item.getLiteral() + " (" + item + ")");
 
             boolean isKnownType = false;
             for (DataTypeWithValue oldType : this.types) {
@@ -66,7 +70,7 @@ class OntologyComplexDataType {
         if (otherTypes == null)
             return this.types;
 
-        if (otherTypes.size() == 0) {
+        if (otherTypes.isEmpty()) {
             otherTypes.addAll(this.types);
         } else {
             for (DataTypeWithValue oldType : this.types) {

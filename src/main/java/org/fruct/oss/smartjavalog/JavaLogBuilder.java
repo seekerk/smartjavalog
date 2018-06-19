@@ -73,7 +73,7 @@ public class JavaLogBuilder {
 
     private OWLOntology ontology = null;
 
-    private static final String smartJavalogPackageName = "org.fruct.oss.smartjavalog.base";
+    private static final String SMART_JAVALOG_PACKAGE_NAME = "org.fruct.oss.smartjavalog.base";
 
     JavaLogBuilder() {
         classTemplate = loadTemplate(CLASS_TEMPLATE);
@@ -139,8 +139,13 @@ public class JavaLogBuilder {
 
     private void generateFactory() {
         Pattern pattern = Pattern.compile("templates/base/.*java");
-        Collection<String> files;
+        Collection<String> files = null;
+        try {
             files = getResources(pattern);
+        } catch (IOException e) {
+            log.error("Can't load parterns", e);
+            exit(2);
+        }
 
         for (String patternFile : files) {
             ST factoryContent;
@@ -150,12 +155,17 @@ public class JavaLogBuilder {
             factoryContent = new ST(templateContent, '$', '$');
             factoryContent.add(PACKAGE_NAME_NODE, packageName);
 
-            saveFile(getFileName(patternFile), factoryContent.render(), smartJavalogPackageName);
+            saveFile(getFileName(patternFile), factoryContent.render(), SMART_JAVALOG_PACKAGE_NAME);
         }
 
         // платформо-специфичные шаблоны
+        files = null;
         pattern = Pattern.compile("templates/" + platform + "/.*java");
-        files = getResources(pattern);
+        try {
+            files = getResources(pattern);
+        } catch (IOException e) {
+            log.error("Can't load patterns", e);
+        }
 
         for (String patternFile : files) {
             ST factoryContent;
@@ -165,7 +175,7 @@ public class JavaLogBuilder {
             factoryContent = new ST(templateContent, '$', '$');
             factoryContent.add(PACKAGE_NAME_NODE, packageName);
 
-            saveFile(getFileName(patternFile), factoryContent.render(), smartJavalogPackageName);
+            saveFile(getFileName(patternFile), factoryContent.render(), SMART_JAVALOG_PACKAGE_NAME);
         }
     }
 
@@ -197,7 +207,7 @@ public class JavaLogBuilder {
         }
     }
 
-    public void generate() {
+    void generate() {
         // генерируем базовый класс
         generateFactory();
 
@@ -259,7 +269,7 @@ public class JavaLogBuilder {
                     setPropertyCollector.append(setPropertyTemplate.render());
                 }
 
-                if (types.size() == 0) {
+                if (types.isEmpty()) {
                     ST setPropertyTemplate = new ST(setDataPropertyTemplate, '$', '$');
                     setPropertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
                     setPropertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
@@ -345,21 +355,21 @@ public class JavaLogBuilder {
     private String getJavaType(OWL2Datatype type) {
 
         switch (type.name()) {
-            case "XSD_DOUBLE": {
+            case "XSD_DOUBLE":
                 return "Double";
-            }
-            case "XSD_STRING": {
+
+            case "XSD_STRING":
                 return "String";
-            }
-            case "XSD_BOOLEAN": {
+
+            case "XSD_BOOLEAN":
                 return "Boolean";
-            }
-            case "XSD_INTEGER": {
+
+            case "XSD_INTEGER":
                 return "Integer";
-            }
-            case "XSD_DECIMAL": {
+
+            case "XSD_DECIMAL":
                 return "Double";
-            }
+
             default:
                 throw new IllegalStateException("Not implemented for " + type.name());
         }
@@ -374,8 +384,8 @@ public class JavaLogBuilder {
      * @return the resources in the order they are found
      */
     private static Collection<String> getResources(
-            final Pattern pattern){
-        final ArrayList<String> retval = new ArrayList<String>();
+            final Pattern pattern) throws IOException {
+        final ArrayList<String> retval = new ArrayList<>();
         final String classPath = System.getProperty("java.class.path", ".");
         final String[] classPathElements = classPath.split(System.getProperty("path.separator"));
         for(final String element : classPathElements){
@@ -386,8 +396,8 @@ public class JavaLogBuilder {
 
     private static Collection<String> getResources(
             final String element,
-            final Pattern pattern){
-        final ArrayList<String> retval = new ArrayList<String>();
+            final Pattern pattern) throws IOException {
+        final ArrayList<String> retval = new ArrayList<>();
         final File file = new File(element);
         if(file.isDirectory()){
             retval.addAll(getResourcesFromDirectory(file, pattern));
@@ -399,14 +409,10 @@ public class JavaLogBuilder {
 
     private static Collection<String> getResourcesFromJarFile(
             final File file,
-            final Pattern pattern){
-        final ArrayList<String> retval = new ArrayList<String>();
+            final Pattern pattern) throws IOException {
+        final ArrayList<String> retval = new ArrayList<>();
         ZipFile zf;
-        try{
-            zf = new ZipFile(file);
-        } catch(final IOException e){
-            throw new Error(e);
-        }
+        zf = new ZipFile(file);
         final Enumeration e = zf.entries();
         while(e.hasMoreElements()){
             final ZipEntry ze = (ZipEntry) e.nextElement();
@@ -416,42 +422,34 @@ public class JavaLogBuilder {
                 retval.add(fileName);
             }
         }
-        try{
-            zf.close();
-        } catch(final IOException e1){
-            throw new Error(e1);
-        }
+        zf.close();
         return retval;
     }
 
     private static Collection<String> getResourcesFromDirectory(
             final File directory,
-            final Pattern pattern){
-        final ArrayList<String> retval = new ArrayList<String>();
+            final Pattern pattern) throws IOException {
+        final ArrayList<String> retval = new ArrayList<>();
         final File[] fileList = directory.listFiles();
         for(final File file : fileList){
             if(file.isDirectory()){
                 retval.addAll(getResourcesFromDirectory(file, pattern));
             } else{
-                try{
-                    final String fileName = file.getCanonicalPath();
-                    final boolean accept = pattern.matcher(fileName).matches();
-                    if(accept){
-                        retval.add(fileName);
-                    }
-                } catch(final IOException e){
-                    throw new Error(e);
+                final String fileName = file.getCanonicalPath();
+                final boolean accept = pattern.matcher(fileName).matches();
+                if(accept){
+                    retval.add(fileName);
                 }
             }
         }
         return retval;
     }
 
-    public void setPlatform(String platform) {
+    void setPlatform(String platform) {
         this.platform = platform;
     }
 
-    public String getPlatform() {
+    String getPlatform() {
         return platform;
     }
 }
