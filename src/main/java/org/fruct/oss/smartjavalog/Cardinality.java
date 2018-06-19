@@ -2,8 +2,6 @@ package org.fruct.oss.smartjavalog;
 
 import org.semanticweb.owlapi.model.*;
 
-import java.util.logging.Logger;
-
 public class Cardinality {
     private int minCardinality = -1;
 
@@ -11,7 +9,7 @@ public class Cardinality {
 
     private int maxCardinality = -1;
 
-    public void parse(OWLClassExpression range) {
+    void parse(OWLClassExpression range) {
         range.accept(new OWLClassExpressionVisitor() {
             @Override
             public void visit(OWLObjectMinCardinality ce) {
@@ -45,15 +43,15 @@ public class Cardinality {
         });
     }
 
-    public int getMinCardinality() {
+    int getMinCardinality() {
         return minCardinality == -1 ? exactCardinality : minCardinality;
     }
 
-    public int getMaxCardinality() {
+    int getMaxCardinality() {
         return maxCardinality == -1 ? exactCardinality : maxCardinality;
     }
 
-    public int getExactCardinality() {
+    int getExactCardinality() {
         if (exactCardinality == -1 && minCardinality == maxCardinality)
             return minCardinality;
         return exactCardinality;

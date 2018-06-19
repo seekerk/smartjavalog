@@ -119,7 +119,7 @@ public class JavaLogBuilder {
         return packageName;
     }
 
-    public void setOutputFolder(String outputFolder) {
+    void setOutputFolder(String outputFolder) {
         this.outputFolder = outputFolder;
     }
 
@@ -171,20 +171,6 @@ public class JavaLogBuilder {
 
             saveFile(getFileName(patternFile), factoryContent.render(), smartJavalogPackageName);
         }
-//
-//        // baserdf.java
-//
-//        //sibFactory.java
-//        factoryContent = new ST(sibFactoryTemplate, '$', '$');
-//        factoryContent.add("PACKAGE_NAME", packageName);
-//
-//        saveFile("SIBFactory.java", factoryContent.render());
-//
-//        //sibFactory.java
-//        factoryContent = new ST(kpiproxyTemplate, '$', '$');
-//        factoryContent.add("PACKAGE_NAME", packageName);
-//
-//        saveFile("KPIproxy.java", factoryContent.render());
     }
 
     private String getFileName(String path) {
@@ -202,12 +188,9 @@ public class JavaLogBuilder {
         try {
             //log.log(Level.INFO, "Create file \"" + path + "/" + fileName + "\"");
             File outputDir = new File(path);
-            if (!outputDir.exists()) {
-                //log.log(Level.INFO, "Create path \"" + path + "\"");
-                if (!outputDir.mkdirs()) {
-                    System.err.println("Can't create folder \"" + outputDir.getAbsolutePath() + "\"");
-                    exit(2);
-                }
+            if (!outputDir.exists() && !outputDir.mkdirs()) {
+                log.log(Level.SEVERE, "Can't create folder \"" + outputDir.getAbsolutePath() + "\"");
+                exit(2);
             }
 
             PrintWriter writer = new PrintWriter(path + "/" + fileName);
@@ -394,7 +377,7 @@ public class JavaLogBuilder {
      *            the pattern to match
      * @return the resources in the order they are found
      */
-    public static Collection<String> getResources(
+    private static Collection<String> getResources(
             final Pattern pattern){
         final ArrayList<String> retval = new ArrayList<String>();
         final String classPath = System.getProperty("java.class.path", ".");
