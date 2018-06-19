@@ -1,7 +1,11 @@
 package org.fruct.oss.smartjavalog;
 
 import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggingEvent;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -14,6 +18,18 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.*;
 
 class JavaLogBuilderTest {
+    private final TestAppender appender = new TestAppender();
+    private final Logger logger = Logger.getRootLogger();
+
+    @BeforeEach
+    void setUp() {
+        logger.addAppender(appender);
+    }
+
+    @AfterEach
+    void tearDown() {
+        logger.removeAppender(appender);
+    }
 
     @Test
     void simpleTest() {
@@ -42,10 +58,13 @@ class JavaLogBuilderTest {
             fail(e);
         }
 
-
-
-        //@TODO: добавить проверку вывода в лог сообщения
+        final List<LoggingEvent> log = appender.getLog();
+        final LoggingEvent firstLogEntry = log.get(0);
+        assertEquals(firstLogEntry.getLevel(), Level.ERROR);
+        assertTrue(firstLogEntry.getRenderedMessage().contains("Can't load template"));
+        assertEquals(firstLogEntry.getLoggerName(), JavaLogBuilder.class.getName());
     }
+
 
     class TestAppender extends AppenderSkeleton {
         private final List<LoggingEvent> log = new ArrayList<LoggingEvent>();
