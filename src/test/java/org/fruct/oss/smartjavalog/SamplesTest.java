@@ -1,13 +1,11 @@
 package org.fruct.oss.smartjavalog;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -19,7 +17,9 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class SamplesTest {
 
@@ -80,7 +80,7 @@ class SamplesTest {
         }
 
         try {
-            Collection<Path> all = new ArrayList<>();
+            Collection<String> all = new ArrayList<>();
             Enumeration<URL> templates = getClass().getClassLoader().getResources("templates/base");
             addTree(new File(templates.nextElement().getFile()).toPath(), all);
             assertEquals(10, all.size());
@@ -119,17 +119,33 @@ class SamplesTest {
      * @param folder path to sources folder
      */
     private void compileFolder(Path folder, int ontologyClassCount) {
-        Collection<Path> all = new ArrayList<>();
+        Collection<String> all = new ArrayList<>();
         try {
             addTree(folder, all);
         } catch (IOException e) {
             fail(e);
         }
-        System.err.println(((ArrayList<Path>) all).get(0).toString());
+        System.err.println(((ArrayList<String>) all).get(0));
         // ontology classes + platform specific classes + base classes
         assertEquals(ontologyClassCount + 1 + 10, all.size());
 
-        //TODO: дописать компиляцию
+        //compile files
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+        StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
+        Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromStrings(all);
+
+        // set compiler's classpath to be same as the runtime's
+        List<String> optionList = new ArrayList<>(Arrays.asList("-classpath", System.getProperty("java.class.path")));
+
+        JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, null, optionList, null, compilationUnits);
+        boolean success = task.call();
+        assertTrue(success);
+        try {
+            fileManager.close();
+        } catch (IOException e) {
+            fail(e);
+        }
     }
 
     /**
@@ -138,13 +154,13 @@ class SamplesTest {
      * @param all result storage
      * @throws IOException From SimpleFileVisitor class
      */
-    private static void addTree(Path directory, final Collection<Path> all)
+    private static void addTree(Path directory, final Collection<String> all)
             throws IOException {
         Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                     throws IOException {
-                all.add(file);
+                all.add(file.toString());
                 return FileVisitResult.CONTINUE;
             }
         });

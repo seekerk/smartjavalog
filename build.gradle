@@ -39,6 +39,8 @@ task runFatJar(type: JavaExec) {
 
 repositories {
     mavenCentral()
+    jcenter()
+    maven { url "https://jitpack.io" }
 }
 
 dependencies {
@@ -48,8 +50,6 @@ dependencies {
     compile 'net.sourceforge.owlapi:owlapi-distribution:5.1.4'
     // https://mvnrepository.com/artifact/log4j/log4j
     compile group: 'log4j', name: 'log4j', version: '1.2.17'
-    // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
-    testCompile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.25'
 
     // https://mvnrepository.com/artifact/commons-io/commons-io
     //compile group: 'commons-io', name: 'commons-io', version: '2.5'
@@ -59,10 +59,13 @@ dependencies {
     compile group: 'org.antlr', name: 'ST4', version: '4.0.7'
 
     testCompile(
-            'org.junit.jupiter:junit-jupiter-api:5.1.0'
+            'org.junit.jupiter:junit-jupiter-api:5.1.0',
+            // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
+            'org.slf4j:slf4j-log4j12:1.7+'
     )
     testRuntime(
-            'org.junit.jupiter:junit-jupiter-engine:5.1.0'
+            'org.junit.jupiter:junit-jupiter-engine:5.1.0',
+            'com.github.seekerk.sofia-kpicore:core:0.7+'
     )
 }
 
