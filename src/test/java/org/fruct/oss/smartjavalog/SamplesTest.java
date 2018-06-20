@@ -1,5 +1,6 @@
 package org.fruct.oss.smartjavalog;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
@@ -7,6 +8,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -18,6 +20,23 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SamplesTest {
+
+    @BeforeAll
+    static void init() {
+        Field field = null;
+        try {
+            field = OntologyFactory.class.getDeclaredField("factory");
+        } catch (NoSuchFieldException e) {
+            fail(e);
+        }
+        field.setAccessible(true);
+        try {
+            field.set(OntologyFactory.getInstance(), null);
+        } catch (IllegalAccessException e) {
+            fail(e);
+        }
+
+    }
 
     @Test
     void testPointOwl() {
