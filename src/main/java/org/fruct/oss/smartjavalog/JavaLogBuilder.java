@@ -142,7 +142,6 @@ public class JavaLogBuilder {
         Pattern pattern = Pattern.compile("base/.*java");
         Collection<String> files = null;
         try {
-            //files = getResources(pattern);
             files = getTemplatesFromResourses(pattern);
         } catch (IOException e) {
             log.error("Can't load patterns", e);
@@ -378,25 +377,6 @@ public class JavaLogBuilder {
         }
     }
 
-    /**
-     * for all elements of java.class.path get a Collection of resources Pattern
-     * pattern = Pattern.compile(".*"); gets all resources
-     *
-     * @param pattern
-     *            the pattern to match
-     * @return the resources in the order they are found
-     */
-//    private static Collection<String> getResources(
-//            final Pattern pattern) throws IOException {
-//        final ArrayList<String> retval = new ArrayList<>();
-//        final String classPath = System.getProperty("java.class.path", ".");
-//        final String[] classPathElements = classPath.split(System.getProperty("path.separator"));
-//        for(final String element : classPathElements){
-//            retval.addAll(getResources(element, pattern));
-//        }
-//        return retval;
-//    }
-
     private static Collection<String> getTemplatesFromResourses(final Pattern pattern)throws IOException {
         Collection<String> ret = new ArrayList<>();
         Enumeration<URL> templates = JavaLogBuilder.class.getClassLoader().getResources("templates" + File.separator);
@@ -423,57 +403,6 @@ public class JavaLogBuilder {
             }
         });
 
-    }
-
-    private static Collection<String> getResources(
-            final String element,
-            final Pattern pattern) throws IOException {
-        final ArrayList<String> retval = new ArrayList<>();
-        final File file = new File(element);
-        if(file.isDirectory()){
-            retval.addAll(getResourcesFromDirectory(file, pattern));
-        } else{
-            retval.addAll(getResourcesFromJarFile(file, pattern));
-        }
-        return retval;
-    }
-
-    private static Collection<String> getResourcesFromJarFile(
-            final File file,
-            final Pattern pattern) throws IOException {
-        final ArrayList<String> retval = new ArrayList<>();
-        ZipFile zf;
-        zf = new ZipFile(file);
-        final Enumeration e = zf.entries();
-        while(e.hasMoreElements()){
-            final ZipEntry ze = (ZipEntry) e.nextElement();
-            final String fileName = ze.getName();
-            final boolean accept = pattern.matcher(fileName).matches();
-            if(accept){
-                retval.add(fileName);
-            }
-        }
-        zf.close();
-        return retval;
-    }
-
-    private static Collection<String> getResourcesFromDirectory(
-            final File directory,
-            final Pattern pattern) throws IOException {
-        final ArrayList<String> retval = new ArrayList<>();
-        final File[] fileList = directory.listFiles();
-        for(final File file : fileList){
-            if(file.isDirectory()){
-                retval.addAll(getResourcesFromDirectory(file, pattern));
-            } else{
-                final String fileName = file.getCanonicalPath();
-                final boolean accept = pattern.matcher(fileName).matches();
-                if(accept){
-                    retval.add(fileName);
-                }
-            }
-        }
-        return retval;
     }
 
     void setPlatform(String platform) {

@@ -68,14 +68,15 @@ class OntologyComplexDataType {
 
     public List<DataTypeWithValue> getOWLDataTypes(List<DataTypeWithValue> otherTypes) {
         if (otherTypes == null)
-            return this.types;
+            return this.types == null ? new ArrayList<>() : this.types;
 
         if (otherTypes.isEmpty()) {
-            otherTypes.addAll(this.types);
+            if (this.types != null)
+                otherTypes.addAll(this.types);
         } else {
             for (DataTypeWithValue oldType : this.types) {
                 boolean isKnownType = false;
-                for (DataTypeWithValue newType: otherTypes) {
+                for (DataTypeWithValue newType : otherTypes) {
                     if (oldType.type.equals(newType.type)) {
                         oldType.values.addAll(newType.values);
                         isKnownType = true;

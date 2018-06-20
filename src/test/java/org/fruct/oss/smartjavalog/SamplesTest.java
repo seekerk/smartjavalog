@@ -1,6 +1,8 @@
 package org.fruct.oss.smartjavalog;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
@@ -21,8 +23,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SamplesTest {
 
-    @BeforeAll
-    static void init() {
+    private JavaLogBuilder builder = null;
+
+    private Path tempFolder = null;
+
+    @BeforeEach
+    void setUp() {
+        // clean factory
         Field field = null;
         try {
             field = OntologyFactory.class.getDeclaredField("factory");
@@ -36,20 +43,30 @@ class SamplesTest {
             fail(e);
         }
 
+        // create builder
+        builder = new JavaLogBuilder();
+
+        // create temp folder
+        try {
+            tempFolder = Files.createTempDirectory("test");
+        } catch (IOException e) {
+            fail(e);
+        }
+    }
+
+    @AfterEach
+    void tearDown() {
+        try {
+            deleteFileOrFolder(tempFolder);
+        } catch (IOException e) {
+            fail(e);
+        }
+        builder = null;
+        tempFolder = null;
     }
 
     @Test
     void testPointOwl() {
-        JavaLogBuilder builder = new JavaLogBuilder();
-
-        //temp folder
-        Path tempFolder = null;
-        try {
-            tempFolder = Files.createTempDirectory("testPoint");
-        } catch (IOException e) {
-            fail(e);
-        }
-
         builder.setOwlFile(Objects.requireNonNull(getClass().getClassLoader().getResource("Samples/geopoint.owl")).getFile());
         builder.setPlatform("default");
         builder.setPackageName("org.fruct.oss.test");
@@ -68,19 +85,40 @@ class SamplesTest {
             addTree(new File(templates.nextElement().getFile()).toPath(), all);
             assertEquals(10, all.size());
         } catch (IOException e) {
-            e.printStackTrace();
+            fail(e);
         }
         builder.generate();
 
         // check result
-        compileFolder(tempFolder);
+        compileFolder(tempFolder, 3);
     }
+
+
+    @Test
+    void testUserOwl() {
+        builder.setOwlFile(Objects.requireNonNull(getClass().getClassLoader().getResource("Samples/user.owl")).getFile());
+        builder.setPlatform("default");
+        builder.setPackageName("org.fruct.oss.test");
+        builder.setOutputFolder(tempFolder.toString());
+
+        //parse file
+        try {
+            builder.parse();
+        } catch (OWLOntologyCreationException e) {
+            fail(e);
+        }
+        builder.generate();
+
+        // check result
+        compileFolder(tempFolder, 2);
+    }
+
 
     /**
      * Compile generated sourses
      * @param folder path to sources folder
      */
-    private void compileFolder(Path folder) {
+    private void compileFolder(Path folder, int ontologyClassCount) {
         Collection<Path> all = new ArrayList<>();
         try {
             addTree(folder, all);
@@ -89,7 +127,7 @@ class SamplesTest {
         }
         System.err.println(((ArrayList<Path>) all).get(0).toString());
         // ontology classes + platform specific classes + base classes
-        assertEquals(3 + 1 + 10, all.size());
+        assertEquals(ontologyClassCount + 1 + 10, all.size());
 
         //TODO: дописать компиляцию
     }
@@ -111,4 +149,30 @@ class SamplesTest {
             }
         });
     }
+
+    private static void deleteFileOrFolder(final Path path) throws IOException {
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>(){
+            @Override public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
+                    throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override public FileVisitResult visitFileFailed(final Path file, final IOException e) {
+                return handleException(e);
+            }
+
+            private FileVisitResult handleException(final IOException e) {
+                e.printStackTrace(); // replace with more robust error handling
+                return FileVisitResult.TERMINATE;
+            }
+
+            @Override public FileVisitResult postVisitDirectory(final Path dir, final IOException e)
+                    throws IOException {
+                if(e!=null)return handleException(e);
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    };
 }
