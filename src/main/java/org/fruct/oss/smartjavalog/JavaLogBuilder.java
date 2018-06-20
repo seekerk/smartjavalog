@@ -11,8 +11,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.URL;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -138,12 +139,13 @@ public class JavaLogBuilder {
     }
 
     private void generateFactory() {
-        Pattern pattern = Pattern.compile("templates/base/.*java");
+        Pattern pattern = Pattern.compile("base/.*java");
         Collection<String> files = null;
         try {
-            files = getResources(pattern);
+            //files = getResources(pattern);
+            files = getTemplatesFromResourses(pattern);
         } catch (IOException e) {
-            log.error("Can't load parterns", e);
+            log.error("Can't load patterns", e);
             exit(2);
         }
 
@@ -160,9 +162,9 @@ public class JavaLogBuilder {
 
         // платформо-специфичные шаблоны
         files = null;
-        pattern = Pattern.compile("templates/" + platform + "/.*java");
+        pattern = Pattern.compile(platform + File.separator +  ".*java");
         try {
-            files = getResources(pattern);
+            files = getTemplatesFromResourses(pattern);
         } catch (IOException e) {
             log.error("Can't load patterns", e);
         }
@@ -175,6 +177,7 @@ public class JavaLogBuilder {
             factoryContent = new ST(templateContent, '$', '$');
             factoryContent.add(PACKAGE_NAME_NODE, packageName);
 
+            log.info("Save file " + getFileName(patternFile));
             saveFile(getFileName(patternFile), factoryContent.render(), SMART_JAVALOG_PACKAGE_NAME);
         }
     }
@@ -383,15 +386,43 @@ public class JavaLogBuilder {
      *            the pattern to match
      * @return the resources in the order they are found
      */
-    private static Collection<String> getResources(
-            final Pattern pattern) throws IOException {
-        final ArrayList<String> retval = new ArrayList<>();
-        final String classPath = System.getProperty("java.class.path", ".");
-        final String[] classPathElements = classPath.split(System.getProperty("path.separator"));
-        for(final String element : classPathElements){
-            retval.addAll(getResources(element, pattern));
-        }
-        return retval;
+//    private static Collection<String> getResources(
+//            final Pattern pattern) throws IOException {
+//        final ArrayList<String> retval = new ArrayList<>();
+//        final String classPath = System.getProperty("java.class.path", ".");
+//        final String[] classPathElements = classPath.split(System.getProperty("path.separator"));
+//        for(final String element : classPathElements){
+//            retval.addAll(getResources(element, pattern));
+//        }
+//        return retval;
+//    }
+
+    private static Collection<String> getTemplatesFromResourses(final Pattern pattern)throws IOException {
+        Collection<String> ret = new ArrayList<>();
+        Enumeration<URL> templates = JavaLogBuilder.class.getClassLoader().getResources("templates" + File.separator);
+        searchTemplateInTree(new File(templates.nextElement().getFile()).toPath().normalize(), ret, pattern);
+
+        return ret;
+    }
+
+    private static void searchTemplateInTree(Path folder, final Collection<String> retval, Pattern pattern) throws IOException {
+        log.debug("Walk to tree \"" + folder + "\" with pattern=" + pattern);
+        Files.walkFileTree(folder, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                    throws IOException {
+
+                String filePath = file.toString().replace(folder.toString() + File.separator, "");
+
+                final boolean accept = pattern.matcher(filePath).matches();
+                if(accept){
+                    retval.add("templates" + File.separator + filePath);
+                }
+                log.debug("Compare result=" + accept + " (\"" + filePath + "\" with pattern=" + pattern.toString() + ")");
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
     }
 
     private static Collection<String> getResources(
