@@ -17,9 +17,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 class SamplesTest {
 
@@ -111,6 +109,25 @@ class SamplesTest {
 
         // check result
         compileFolder(tempFolder, 2);
+    }
+
+    @Test
+    void testSympOwl() {
+        builder.setOwlFile(Objects.requireNonNull(getClass().getClassLoader().getResource("Samples/symp.owl")).getFile());
+        builder.setPlatform("default");
+        builder.setPackageName("org.fruct.oss.test");
+        builder.setOutputFolder(tempFolder.toString());
+
+        //parse file
+        try {
+            builder.parse();
+        } catch (OWLOntologyCreationException e) {
+            fail(e);
+        }
+        assertThrows(IllegalStateException.class, ()->builder.generate());
+
+        // check result
+        compileFolder(tempFolder, 0);
     }
 
 
