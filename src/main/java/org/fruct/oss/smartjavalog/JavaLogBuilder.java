@@ -48,6 +48,7 @@ public class JavaLogBuilder {
     private static final String PACKAGE_NAME_NODE = "PACKAGE_NAME";
     private static final String PROPERTY_NAME_NODE = "PROPERTY_NAME";
     private static final String PROPERTY_URI_NODE = "PROPERTY_URI";
+    private static final String PROPERTY_TYPE_NODE = "PROPERTY_TYPE";
 
     /**
      * источник данных
@@ -166,7 +167,7 @@ public class JavaLogBuilder {
             log.error("Can't load patterns", e);
         }
 
-        for (String patternFile : files) {
+        for (String patternFile : Objects.requireNonNull(files)) {
             ST factoryContent;
 
             String templateContent = loadTemplate(patternFile);
@@ -192,7 +193,6 @@ public class JavaLogBuilder {
         String path = this.outputFolder + "/" + packageName.replace(".", "/");
 
         try {
-            //log.log(Level.INFO, "Create file \"" + path + "/" + fileName + "\"");
             File outputDir = new File(path);
             if (!outputDir.exists() && !outputDir.mkdirs()) {
                 log.error("Can't create folder \"" + outputDir.getAbsolutePath() + "\"");
@@ -254,7 +254,7 @@ public class JavaLogBuilder {
                 // если это не класс, а данные, то выбираем тип
                 log.info("Found data property \"" + property.getFragment() + "\" for class \"" + cls.getName() + "\"");
                 List<OntologyComplexDataType.DataTypeWithValue> types = OntologyFactory.getInstance().getProperty(property).getOWLDataTypes();
-                System.err.println("Property " + property.getFragment() + " has types count=" + types.size());
+                log.debug("Property " + property.getFragment() + " has types count=" + types.size());
 
                 StringBuilder setPropertyCollector = new StringBuilder();
                 // пробегаемся по типам
@@ -262,7 +262,7 @@ public class JavaLogBuilder {
                     ST setPropertyTemplate = new ST(setDataPropertyTemplate, '$', '$');
                     setPropertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
                     setPropertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
-                    setPropertyTemplate.add("PROPERTY_TYPE", getJavaType(type.getType()));
+                    setPropertyTemplate.add(PROPERTY_TYPE_NODE, getJavaType(type.getType()));
                     setPropertyTemplate.add("MIN_CARDINALITY", type.getCardinality().getMinCardinality());
                     setPropertyTemplate.add("MAX_CARDINALITY", type.getCardinality().getMaxCardinality());
                     setPropertyTemplate.add("EXACT_CARDINALITY", type.getCardinality().getExactCardinality());
@@ -273,7 +273,7 @@ public class JavaLogBuilder {
                     ST setPropertyTemplate = new ST(setDataPropertyTemplate, '$', '$');
                     setPropertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
                     setPropertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
-                    setPropertyTemplate.add("PROPERTY_TYPE", "String");
+                    setPropertyTemplate.add(PROPERTY_TYPE_NODE, "String");
                     setPropertyTemplate.add("MIN_CARDINALITY", -1);
                     setPropertyTemplate.add("MAX_CARDINALITY", -1);
                     setPropertyTemplate.add("EXACT_CARDINALITY", -1);
@@ -300,7 +300,7 @@ public class JavaLogBuilder {
                 Cardinality crd = OntologyFactory.getInstance().getProperty(property).getComplexDataCardinality();
                 propertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
                 propertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
-                propertyTemplate.add("PROPERTY_TYPE", propType);
+                propertyTemplate.add(PROPERTY_TYPE_NODE, propType);
                 propertyTemplate.add("MIN_CARDINALITY", crd.getMinCardinality());
                 propertyTemplate.add("MAX_CARDINALITY", crd.getMaxCardinality());
                 propertyTemplate.add("EXACT_CARDINALITY", crd.getExactCardinality());
@@ -308,7 +308,7 @@ public class JavaLogBuilder {
 
                 updatePropertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
                 updatePropertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
-                updatePropertyTemplate.add("PROPERTY_TYPE", propType);
+                updatePropertyTemplate.add(PROPERTY_TYPE_NODE, propType);
                 updatePropertyCollector.append(updatePropertyTemplate.render());
 
             } else {
@@ -320,7 +320,7 @@ public class JavaLogBuilder {
                 Cardinality crd = OntologyFactory.getInstance().getProperty(property).getClassCardinality();
                 propertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
                 propertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
-                propertyTemplate.add("PROPERTY_TYPE", propType);
+                propertyTemplate.add(PROPERTY_TYPE_NODE, propType);
                 propertyTemplate.add("MIN_CARDINALITY", crd.getMinCardinality());
                 propertyTemplate.add("MAX_CARDINALITY", crd.getMaxCardinality());
                 propertyTemplate.add("EXACT_CARDINALITY", crd.getExactCardinality());
@@ -328,7 +328,7 @@ public class JavaLogBuilder {
 
                 updatePropertyTemplate.add(PROPERTY_NAME_NODE, propertyName);
                 updatePropertyTemplate.add(PROPERTY_URI_NODE, property.getIRIString());
-                updatePropertyTemplate.add("PROPERTY_TYPE", propType);
+                updatePropertyTemplate.add(PROPERTY_TYPE_NODE, propType);
                 updatePropertyCollector.append(updatePropertyTemplate.render());
 
             }
@@ -387,8 +387,7 @@ public class JavaLogBuilder {
         log.debug("Walk to tree \"" + folder + "\" with pattern=" + pattern);
         Files.walkFileTree(folder, new SimpleFileVisitor<Path>() {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                    throws IOException {
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
 
                 String filePath = file.toString().replace(folder.toString() + File.separator, "");
 
