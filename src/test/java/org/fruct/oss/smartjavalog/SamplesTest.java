@@ -137,6 +137,7 @@ class SamplesTest {
 
         // set compiler's classpath to be same as the runtime's
         List<String> optionList = new ArrayList<>(Arrays.asList("-classpath", System.getProperty("java.class.path")));
+        optionList.add("-Xlint:unchecked");
 
         JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, null, optionList, null, compilationUnits);
         boolean success = task.call();

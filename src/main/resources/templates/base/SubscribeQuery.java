@@ -30,7 +30,7 @@ public class SubscribeQuery {
      */
     private static SubscribeQuery instance = null;
 
-    private Map<String, List<SubscribeListener>> classSubscriptions = new HashMap<>();
+    private Map<String, List<SubscribeListener<BaseRDF>>> classSubscriptions = new HashMap<>();
 
     private Map<String, SoftReference<BaseRDF>> knownItems = new HashMap<>();
 
@@ -149,7 +149,7 @@ public class SubscribeQuery {
         if (this.classSubscriptions.containsKey(triple.get(2))) {
             BaseRDF newItem = BaseRDF.getInstance(triple.get(2), triple.get(0));
             log.info("notify listeners: " + triple.get(0));
-            for (SubscribeListener listener : this.classSubscriptions.get(triple.get(2))) {
+            for (SubscribeListener<BaseRDF> listener : this.classSubscriptions.get(triple.get(2))) {
                 listener.addItem(newItem);
             }
             return;
@@ -168,7 +168,7 @@ public class SubscribeQuery {
         //[3] - object type
         if (classSubscriptions.containsKey(triple.get(2))) {
             BaseRDF newItem = BaseRDF.getInstance(triple.get(2), triple.get(0));
-            for (SubscribeListener listener : classSubscriptions.get(triple.get(2))) {
+            for (SubscribeListener<BaseRDF> listener : classSubscriptions.get(triple.get(2))) {
                 listener.removeItem(newItem);
             }
         }
@@ -257,7 +257,7 @@ public class SubscribeQuery {
      * @param classURI the URI of class. Use getClassUri() to obtain class URI.
      * @param listener Implementation of {@link SubscribeListener} interface.
      */
-    public void addSubscription(String classURI, SubscribeListener listener) {
+    public void addSubscription(String classURI, SubscribeListener<BaseRDF> listener) {
         if (!this.classSubscriptions.containsKey(classURI))
             this.classSubscriptions.put(classURI, new ArrayList<>());
         this.classSubscriptions.get(classURI).add(listener);
@@ -270,7 +270,7 @@ public class SubscribeQuery {
      * @param listener Implementation of {@link SubscribeListener} interface.
      * @return true if subsription removed correctly.
      */
-    public boolean removeSubscription(String classURI, SubscribeListener listener) {
+    public boolean removeSubscription(String classURI, SubscribeListener<BaseRDF> listener) {
         return this.classSubscriptions.get(classURI).remove(listener);
     }
 

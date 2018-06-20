@@ -7,7 +7,7 @@
         if (_$PROPERTY_NAME$_new != null)
             return _$PROPERTY_NAME$_new;
         
-        ArrayList<$PROPERTY_TYPE$> ret = new ArrayList();
+        ArrayList<$PROPERTY_TYPE$> ret = new ArrayList<>();
         //search IDs in triples
         ArrayList<String> $PROPERTY_NAME$IDs = getInTriples($PROPERTY_NAME$_URI);
         for (String locID: $PROPERTY_NAME$IDs) {

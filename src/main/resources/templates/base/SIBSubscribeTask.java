@@ -8,7 +8,7 @@ import java.util.List;
  */
 
 public abstract class SIBSubscribeTask extends SIBAsyncTask {
-    protected List<SubscribeListener> listeners = new ArrayList();
+    protected List<SubscribeListener> listeners = new ArrayList<>();
 
     public SIBSubscribeTask(KPIproxy proxy) {
         super(proxy);
